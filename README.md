@@ -3,6 +3,7 @@
 ### 软件版本
 ```
 hadoop-3.1.4
+  https://hadoop.apache.org/docs/r3.1.4/hadoop-project-dist/hadoop-common/ClusterSetup.html
 ranger-2.0.0
   http://ranger.apache.org/quick_start_guide.html
 knox-1.1.0
