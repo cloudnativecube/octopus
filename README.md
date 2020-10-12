@@ -11,6 +11,7 @@ knox-1.1.0
 hive-3.1.2
   https://cwiki.apache.org/confluence/display/Hive/GettingStarted#GettingStarted-InstallingHivefromaStableRelease
 hbase-2.2.6
+  https://hbase.apache.org/book.html#quickstart_fully_distributed
 spark-3.0.0
 elasticsearch-7.9.2
   下载页面：https://www.elastic.co/cn/downloads/elasticsearch
