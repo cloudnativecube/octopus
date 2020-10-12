@@ -9,6 +9,7 @@ ranger-2.0.0
 knox-1.1.0
   http://knox.apache.org/books/knox-1-1-0/user-guide.html
 hive-3.1.2
+  https://cwiki.apache.org/confluence/display/Hive/GettingStarted#GettingStarted-InstallingHivefromaStableRelease
 hbase-2.2.6
 spark-3.0.0
 elasticsearch-7.9.2
