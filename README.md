@@ -10,6 +10,7 @@ knox-1.1.0
   http://knox.apache.org/books/knox-1-1-0/user-guide.html
 hive-3.1.2
   https://cwiki.apache.org/confluence/display/Hive/GettingStarted#GettingStarted-InstallingHivefromaStableRelease
+  https://cwiki.apache.org/confluence/display/Hive/AdminManual+Configuration
 hbase-2.2.6
   https://hbase.apache.org/book.html#quickstart_fully_distributed
 spark-3.0.0
