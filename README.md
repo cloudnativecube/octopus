@@ -13,6 +13,8 @@ hive-3.1.2
   https://cwiki.apache.org/confluence/display/Hive/AdminManual+Configuration
 hbase-2.2.6
   https://hbase.apache.org/book.html#quickstart_fully_distributed
+zookeeper-3.6.2
+  https://zookeeper.apache.org/doc/r3.6.2/zookeeperStarted.html
 spark-3.0.0
 elasticsearch-7.9.2
   下载页面：https://www.elastic.co/cn/downloads/elasticsearch
