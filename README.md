@@ -26,3 +26,37 @@ centos03 192.168.74.196
 centos04 192.168.72.189
 ```
 
+## 各服务地址
+
+### Knox
+
+- HDFS：https://10.0.0.11:8443/gateway/octopus/hdfs
+
+- YARN：https://10.0.0.11:8443/gateway/octopus/yarn
+
+### Ranger Admin
+
+- UI：http://centos01:6080   用户名/密码：admin/2020root
+
+### HDFS
+
+- UI：http://10.0.0.11:9870/
+- Namenode：hdfs://centos01:8020
+- WebHDFS：http://centos01:9870/webhdfs
+
+### YARN
+
+
+
+### Spark
+
+- History Server UI：http://centos01:18080
+
+### Hive
+
+- HiveServer2 UI：http://10.0.0.11:10002
+- HiveServer2：http://centos01:10000
+
+### HBase
+
+- WebHBase：http://centos01:60080
