@@ -88,8 +88,18 @@ hadoop> mv mysql-connector-java-5.1.49.jar /home/servers/hive-3.1.2/lib/
 
 安装mysql, 创建hive数据库实例，以及hive数据库用户，密码为2020root, 初始化mysql数据库。
 
+mysql操作：
+
 ```
-schematool initSchema -dbType mysql
+create user 'hive'@'localhost' identified by '2020root';
+grant all privileges on hive.* to 'hive'@'localhost'; 
+flush privileges;
+```
+
+初始化hive metastore：
+
+```
+schematool -initSchema -dbType mysql
 ```
 
 ##### 启动Hive
