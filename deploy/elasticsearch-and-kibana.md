@@ -134,3 +134,47 @@ network.host: centos02
 }
 ```
 
+# Kibana
+
+### 概述
+
+- 从这个页面找到安装包：https://www.elastic.co/guide/en/kibana/current/targz.html
+- 文档：https://www.elastic.co/guide/en/kibana/current/index.html
+
+### 部署
+
+1.环境
+
+选择7.9.2版本，下载安装包：https://artifacts.elastic.co/downloads/kibana/kibana-7.9.2-linux-x86_64.tar.gz
+
+部署到centos01节点。
+
+2.配置
+
+```
+# pwd
+/home/servers/kibana-7.9.2-linux-x86_64
+```
+
+配置文件config/kibana.yml：
+
+```
+server.port: 5601
+server.host: "centos01"
+server.name: "octopus-kibana"
+elasticsearch.hosts: ["http://centos01:9200"]
+```
+
+3.启动
+
+```
+nohup bin/kibana 2>&1 > kibana.log &
+```
+
+在浏览器上打开UI：http://10.0.0.11:5601/
+
+### 探索es数据
+
+在UI上进入Discover，创建index pattern匹配到es里的index。
+
+再回到discover页面：http://10.0.0.11:5601/app/discover，即可开始查询es中的数据。
