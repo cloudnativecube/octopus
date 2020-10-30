@@ -1,0 +1,12 @@
+**/target/**
+*.class
+*.iml
+*.sh
+.DS_Store
+
+# logs
+*.log
+
+# IDEA config files
+.idea/
+*.iml
