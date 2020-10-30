@@ -2,7 +2,7 @@
 
 ## 开发分支
 
-开发是基于新分支 https://github.com/cloudnativecube/waterdrop/tree/branch-v1.5.1，其中修改了依赖的spark和scala版本。
+开发是基于新分支 https://github.com/cloudnativecube/waterdrop/tree/branch-v1.5.1 其中修改了依赖的spark和scala版本。
 
 ```
 spark.version=2.4.7
