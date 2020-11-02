@@ -1,7 +1,6 @@
 **/target/**
 *.class
 *.iml
-*.sh
 .DS_Store
 
 # logs
