@@ -19,7 +19,7 @@ sudo yum install clickhouse-server clickhouse-client
 需要下载以下三个安装包
 clickhouse-client-20.10.2.20-2.noarch.rpm
 clickhouse-server-20.10.2.20-2.noarch.rpm
-clickhouse-common-static-20.10.2.20-2.x86_64.rpm，
+clickhouse-common-static-20.10.2.20-2.x86_64.rpm
 上传到服务器后，yum安装rpm包:
 sudo yum install clickhouse-common-static-20.10.2.20-2.x86_64.rpm
 sudo yum install clickhouse-server-20.10.2.20-2.noarch.rpm
@@ -34,6 +34,8 @@ sudo yum install clickhouse-client-20.10.2.20-2.noarch.rpm
 mkdir -p /home/servers/clickhouse-20.10.2.20/etc/clickhouse-server/
 sudo chown -R clickhouse:clickhouse /home/servers/clickhouse-20.10.2.20
 ```
+
+#### 3.1 配置config.xml
 
 修改配置文件 /etc/clickhouse-server/config.xml，并分发到所有节点（注释的位置是需要修改的元素，其他可忽略，使用默认配置）：
 
@@ -277,6 +279,8 @@ sudo chown -R clickhouse:clickhouse /home/servers/clickhouse-20.10.2.20
 </yandex>
 ```
 
+#### 3.2 配置metrika.xml
+
 创建文件 sudo vim /home/servers/clickhouse-20.10.2.20/etc/clickhouse-server/metrika.xml
 
 ```xml
@@ -348,10 +352,6 @@ sudo chown -R clickhouse:clickhouse /home/servers/clickhouse-20.10.2.20
         <!-- replica id，10.0.0.11设置为ck-01-01，13设置为ck-01-02 -->
         <replica>ck-01-01</replica>
     </macros>
-
-    <networks>
-        <ip>::/0</ip>
-    </networks>
   
     <!-- 修改zookeeper配置，用于带副本的表间数据同步及DDL同步 -->
     <zookeeper-servers>
@@ -379,6 +379,69 @@ sudo chown -R clickhouse:clickhouse /home/servers/clickhouse-20.10.2.20
 
 </yandex>
 ```
+
+#### 3.3 配置user.xml
+
+修改配置文件 /etc/clickhouse-server/user.xml，并分发到所有节点，该文件主要用于设置用户权限
+
+```xml
+<?xml version="1.0"?>
+<yandex>
+    <profiles>
+        <default>
+            <max_memory_usage>10000000000</max_memory_usage>
+            <use_uncompressed_cache>0</use_uncompressed_cache>
+            <load_balancing>random</load_balancing>
+        </default>
+
+        <readonly>
+            <readonly>1</readonly>
+        </readonly>
+    </profiles>
+
+    <users>
+        <!-- If user name was not specified, 'default' user is used. -->
+        <default>
+            <password></password>
+            <!-- 可配置只允许本机访问默认用户 -->
+            <networks incl="networks" replace="replace">
+                <ip>::1</ip>
+                <ip>127.0.0.1</ip>
+            </networks>
+            <profile>default</profile>
+            <quota>default</quota>
+        </default>
+        <!-- 新建用户datacube -->
+        <datacube>
+            <!-- 用户密码，明文，也支持多种加密算法密文，如可配置元素password_sha256_hex -->
+            <password>2020cube</password>
+            <!-- 允许任意机器访问 -->
+            <networks incl="networks" replace="replace">
+                <ip>::/0</ip>
+            </networks>
+            <profile>default</profile>
+            <quota>default</quota>
+        </datacube>
+    </users>
+  
+    <quotas>
+        <default>
+            <interval>
+                <!-- Length of interval. -->
+                <duration>3600</duration>
+                <!-- No limits. Just calculate resource usage for time interval. -->
+                <queries>0</queries>
+                <errors>0</errors>
+                <result_rows>0</result_rows>
+                <read_rows>0</read_rows>
+                <execution_time>0</execution_time>
+            </interval>
+        </default>
+    </quotas>
+</yandex>
+```
+
+
 
 ### 4.启动集群
 
