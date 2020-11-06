@@ -406,7 +406,7 @@ sudo chown -R clickhouse:clickhouse /home/servers/clickhouse-20.10.2.20
             <!-- 可配置只允许本机访问默认用户 -->
             <networks incl="networks" replace="replace">
                 <ip>::1</ip>
-                <ip>127.0.0.1</ip>
+                <ip>10.0.0.1/8</ip> <!-- 集群的节点间需要互访 -->
             </networks>
             <profile>default</profile>
             <quota>default</quota>
