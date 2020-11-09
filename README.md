@@ -1,24 +1,42 @@
 # octopus
 
 ### 软件版本
-```
-hadoop-3.1.4
-  https://hadoop.apache.org/docs/r3.1.4/hadoop-project-dist/hadoop-common/ClusterSetup.html
-ranger-2.0.0
-  http://ranger.apache.org/quick_start_guide.html
-knox-1.1.0
-  http://knox.apache.org/books/knox-1-1-0/user-guide.html
-hive-3.1.2
-  https://cwiki.apache.org/confluence/display/Hive/GettingStarted#GettingStarted-InstallingHivefromaStableRelease
-  https://cwiki.apache.org/confluence/display/Hive/AdminManual+Configuration
-hbase-2.2.6
-  https://hbase.apache.org/book.html#quickstart_fully_distributed
-zookeeper-3.6.2
-  https://zookeeper.apache.org/doc/r3.6.2/zookeeperStarted.html
-spark-2.4.7
-elasticsearch-7.9.2
-waterdrop-1.5.1
-```
+
+| 软件           | 版本       | 依赖              |
+| -------------- | ---------- | ----------------- |
+| Knox           | 1.1.0      |                   |
+| Ranger         | 2.0.0      | MySQL, Solr       |
+| MySQL(mariadb) | 5.5.65     |                   |
+| Solr           | 8.6.3      | ZooKeeper         |
+| ZooKeeper      | 3.6.2      |                   |
+| Hadoop         | 3.1.4      |                   |
+| Hive           | 3.1.2      | Hadoop            |
+| HBase          | 2.2.6      | Hadoop, ZooKeeper |
+| Phoenix        |            | Hbase             |
+| Spark          | 2.4.7      | Hadoop            |
+| Ambari         | 2.7.5      |                   |
+| ealsticsearch  | 7.9.2      |                   |
+| Kibana         | 7.9.2      | elasticsearch     |
+| Clickhouse     | 20.10.2.20 | ZooKeeper         |
+| Waterdrop      | 2.0.4      | Spark             |
+
+文档：
+
+- Hadoop: https://hadoop.apache.org/docs/r3.1.4/hadoop-project-dist/hadoop-common/ClusterSetup.html
+
+- Ranger: http://ranger.apache.org/quick_start_guide.html
+
+- Knonx: http://knox.apache.org/books/knox-1-1-0/user-guide.html
+
+- Hive: 
+
+  - https://cwiki.apache.org/confluence/display/Hive/GettingStarted#GettingStarted-InstallingHivefromaStableRelease
+
+  - https://cwiki.apache.org/confluence/display/Hive/AdminManual+Configuration
+
+- Hbase: https://hbase.apache.org/book.html#quickstart_fully_distributed
+
+- ZooKeeper: https://zookeeper.apache.org/doc/r3.6.2/zookeeperStarted.html
 
 ### 机器
 
@@ -31,7 +49,7 @@ waterdrop-1.5.1
 
 ## 组件分布
 
-| 组件                | 依赖             | centos01                      | centos02                    | centos03         | Centos04         |
+| 组件                | 依赖             | centos01                      | centos02                    | centos03         | centos04         |
 | ------------------- | ---------------- | ----------------------------- | --------------------------- | ---------------- | ---------------- |
 | HDFS                |                  | NameNode                      | DataNode、SecondaryNameNode | DataNode         | DataNode         |
 | YARN                |                  | ResourceManager               | DataManager                 | DataManager      | DataManager      |
@@ -46,6 +64,7 @@ waterdrop-1.5.1
 | Knox                |                  | knox                          |                             |                  |                  |
 | Ranger              | MySQL、Solr      | ranger-admin、ranger-usersync |                             |                  |                  |
 | elasticsearch       |                  | master                        | data                        | data             | data             |
+| Kibana              |                  | Kibana                        |                             |                  |                  |
 
 ## 各服务地址
 
