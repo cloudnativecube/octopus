@@ -38,7 +38,9 @@
 
 - ZooKeeper: https://zookeeper.apache.org/doc/r3.6.2/zookeeperStarted.html
 
-### 机器
+### 机器环境
+
+主机IP和主机名：
 
 ```
 10.0.0.11 centos01
@@ -47,24 +49,36 @@
 10.0.0.14 centos04
 ```
 
+部署目录：
+
+```
+/home/servers
+```
+
+部署用户：hadoop、root
+
 ## 组件分布
 
-| 组件                | 依赖             | centos01                      | centos02                    | centos03         | centos04         |
-| ------------------- | ---------------- | ----------------------------- | --------------------------- | ---------------- | ---------------- |
-| HDFS                |                  | NameNode                      | DataNode、SecondaryNameNode | DataNode         | DataNode         |
-| YARN                |                  | ResourceManager               | DataManager                 | DataManager      | DataManager      |
-| YARN JobHistory     |                  | JobHistoryServer              | JobHistoryServer            | JobHistoryServer | JobHistoryServer |
-| Hive                | MySQL            | metastore、hiveserver2        |                             |                  |                  |
-| ZooKeeper           |                  | zk                            | zk                          | zk               |                  |
-| HBase               | ZooKeeper        | HMaster                       | HRegionServer               | HRegionServer    | HRegionServer    |
-| Spark               | YARN、 metastore | thriftserver                  |                             |                  |                  |
-| Spark HistoryServer |                  | HistoryServer                 |                             |                  |                  |
-| MySQL               |                  | mysql server                  |                             |                  |                  |
-| Solr                | ZooKeeper        | solr                          | solr                        | solr             |                  |
-| Knox                |                  | knox                          |                             |                  |                  |
-| Ranger              | MySQL、Solr      | ranger-admin、ranger-usersync |                             |                  |                  |
-| elasticsearch       |                  | master                        | data                        | data             | data             |
-| Kibana              |                  | Kibana                        |                             |                  |                  |
+| 组件                | 启动用户 | 依赖             | centos01                      | centos02                    | centos03         | centos04         |
+| ------------------- | -------- | ---------------- | ----------------------------- | --------------------------- | ---------------- | ---------------- |
+| HDFS                | hadoop   |                  | NameNode                      | DataNode、SecondaryNameNode | DataNode         | DataNode         |
+| YARN                | hadoop   |                  | ResourceManager               | DataManager                 | DataManager      | DataManager      |
+| YARN JobHistory     | hadoop   |                  | JobHistoryServer              | JobHistoryServer            | JobHistoryServer | JobHistoryServer |
+| Hive                | hadoop   | MySQL            | metastore、hiveserver2        |                             |                  |                  |
+| ZooKeeper           | hadoop   |                  | zk                            | zk                          | zk               |                  |
+| HBase               | hadoop   | ZooKeeper        | HMaster                       | HRegionServer               | HRegionServer    | HRegionServer    |
+| Spark               | hadoop   | YARN、 metastore | thriftserver                  |                             |                  |                  |
+| Spark HistoryServer | hadoop   |                  | HistoryServer                 |                             |                  |                  |
+| MySQL               | root     |                  | mysql server                  |                             |                  |                  |
+| Solr                | root     | ZooKeeper        | solr                          | solr                        | solr             |                  |
+| Knox                | hadoop   |                  | knox                          |                             |                  |                  |
+| Ranger              | root     | MySQL、Solr      | ranger-admin、ranger-usersync |                             |                  |                  |
+| elasticsearch       | hadoop   |                  | master                        | data                        | data             | data             |
+| Kibana              | hadoop   |                  | Kibana                        |                             |                  |                  |
+
+注：
+
+- 安装ranger的各种plugin时也要使用root用户，即enable-xxx-plugin.sh、disable-xxx-plugin.sh脚本用root执行。
 
 ## 各服务地址
 
