@@ -194,8 +194,14 @@ https://10.0.0.11:8443/gateway/<topology>/<service>
 
 - Quick Start Guide：http://ranger.apache.org/quick_start_guide.html
 
-- 安装文档：https://cwiki.apache.org/confluence/display/RANGER/Apache+Ranger+0.5.0+Installation
+- 安装文档：
+
+  - https://cwiki.apache.org/confluence/display/RANGER/Apache+Ranger+0.5.0+Installation
+
+  - https://cwiki.apache.org/confluence/display/RANGER/Ranger+Installation+Guide
+
 - Ranger User Guide：https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=57901344#RangerUserGuide(workinprogress)-KnoxRepositoryconfiguration
+
 - 参考：https://juejin.im/post/6844904159930482696
 
 ### 2. 安装包
@@ -354,6 +360,12 @@ Installation of Ranger PolicyManager Web Application is completed.
 ```
 
 admin web UI：http://10.0.0.11:6080
+
+停止命令：
+
+```
+# ranger-admin stop
+```
 
 ### 4. user-sync组件
 
@@ -571,7 +583,9 @@ jdbc.url = jdbc:hive2://centos01:10000
 
 然后在ranger-admin上能看到审计日志。
 
-### 8. HBase plugin(部署在所有hbase master节点上)
+### 8. HBase plugin
+
+**注意：hbase plugin需要部署在所有hbase master节点上。**
 
 目录：
 
@@ -612,7 +626,7 @@ Ranger Plugin for hbase has been enabled. Please restart hbase to ensure that ch
 拷贝jar包：
 
 ```
-cp /home/servers/ranger-2.0.0/ranger-2.0.0-admin/ews/webapp/WEB-INF/lib/jersey-bundle-1.19.3.jar /home/servers/hbase-2.2.6/lib/
+# cp /home/servers/ranger-2.0.0/ranger-2.0.0-admin/ews/webapp/WEB-INF/lib/jersey-bundle-1.19.3.jar /home/servers/hbase-2.2.6/lib/
 ```
 
 创建spool目录：
@@ -646,7 +660,129 @@ zookeeper.znode.parent = /hbase
 
 在ranger-admin上查看Plugins状态是否是200。
 
-默认的策略会禁止hbase master创建表，先暂时禁用该策略。
+### 9. Elasticsearch Plugin
+
+参考资料：
+
+- https://cwiki.apache.org/confluence/display/RANGER/Elasticsearch+Plugin
+- https://segmentfault.com/a/1190000023643744
+
+**注意：elasticsearch plugin需要部署在所有elasticsearch的master和data节点上。**
+
+目录：
+
+```
+/home/servers/ranger-2.0.0/ranger-2.0.0-elasticsearch-plugin
+```
+
+配置：
+
+```
+POLICY_MGR_URL=http://centos01:6080
+REPOSITORY_NAME=elasticsearchdev
+COMPONENT_INSTALL_DIR_NAME=/home/servers/elasticsearch-6.2.2
+CUSTOM_USER=hadoop
+CUSTOM_GROUP=hadoop
+
+// 审计日志
+XAAUDIT.SOLR.ENABLE=true
+XAAUDIT.SOLR.URL=NONE
+XAAUDIT.SOLR.USER=NONE
+XAAUDIT.SOLR.PASSWORD=NONE
+XAAUDIT.SOLR.ZOOKEEPER=centos01:2181,centos02:2181,centos03:2181/ranger_audits
+XAAUDIT.SOLR.FILE_SPOOL_DIR=/var/log/elasticsearch/audit/solr/spool
+XAAUDIT.SOLR.IS_ENABLED=false
+XAAUDIT.SOLR.MAX_QUEUE_SIZE=1
+XAAUDIT.SOLR.MAX_FLUSH_INTERVAL_MS=1000
+XAAUDIT.SOLR.SOLR_URL=http://centos01:8983/solr/ranger_audits
+```
+
+创建spool目录：
+
+```
+# mkdir -p /var/log/elasticsearch/audit/solr/spool
+# chown -R hadoop:hadoop /var/log/elasticsearch/audit/solr/spool
+```
+
+从hdfs plugin目录把jar包拷过来，同时拷贝到两个目录（不知道为什么缺少jar包）：
+
+```
+# cp /home/servers/ranger-2.0.0/ranger-2.0.0-hdfs-plugin/install/lib/{woodstox-core-5.0.3.jar,stax2-api-3.1.4.jar,commons-configuration2-2.1.1.jar,htrace-core4-4.1.0-incubating.jar} ./install/lib/
+# cp /home/servers/ranger-2.0.0/ranger-2.0.0-hdfs-plugin/install/lib/{woodstox-core-5.0.3.jar,stax2-api-3.1.4.jar,commons-configuration2-2.1.1.jar,htrace-core4-4.1.0-incubating.jar} ./lib/ranger-elasticsearch-plugin/
+# cp /home/servers/ranger-2.0.0/ranger-2.0.0-admin/ews/lib/zookeeper-3.4.14.jar ./lib/ranger-elasticsearch-plugin/ranger-elasticsearch-plugin-impl/
+```
+
+安装插件：
+
+```
+# ./enable-elasticsearch-plugin.sh
+// 省略中间输出
+Ranger Plugin for elasticsearch has been enabled. Please restart elasticsearch to ensure that changes are effective.
+```
+
+在es的目录下产生plugin的文件：
+
+```
+/home/servers/elasticsearch-6.2.2/config/ranger-elasticsearch-plugin/ranger-elasticsearch-audit.xml
+/home/servers/elasticsearch-6.2.2/config/ranger-elasticsearch-plugin/ranger-elasticsearch-security.xml
+/home/servers/elasticsearch-6.2.2/plugins/ranger-elasticsearch-plugin/
+```
+
+在ranger-admin上创建Elasticsearch Service（需要先在es上有存在的index才能测试连接成功）：
+
+```
+Service Name = elasticsearchdev  // 与REPOSITORY_NAME配置一致
+Username = hadoop
+Elasticsearch URL: http://centos01:9200
+```
+
+修改文件lib/ranger-elasticsearch-plugin/plugin-security.policy（有些权限需要添加，否则es启不来）：
+
+```
+grant {
+  permission java.lang.RuntimePermission "createClassLoader";
+  permission java.lang.RuntimePermission "getClassLoader";
+  permission java.lang.RuntimePermission "setContextClassLoader";
+  permission java.lang.RuntimePermission "shutdownHooks";
+  permission java.lang.RuntimePermission "accessDeclaredMembers";
+  permission java.lang.RuntimePermission "accessClassInPackage.sun.misc";
+  permission java.lang.RuntimePermission "loadLibrary.*";
+  permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
+  permission java.lang.reflect.ReflectPermission "newProxyInPackage.com.kstruct.gethostname4j";
+  permission javax.security.auth.AuthPermission "getLoginConfiguration";
+  permission javax.security.auth.AuthPermission "setLoginConfiguration";
+
+  permission java.net.NetPermission "getProxySelector";
+  // adapt to connect different IP and Port
+  permission java.net.SocketPermission "*", "connect,resolve";
+
+  permission java.util.PropertyPermission "*", "read,write";
+  // adapt to different directories configured by user
+  permission java.io.FilePermission "<<ALL FILES>>", "read,write,delete";
+};
+```
+
+在文件/home/servers/elasticsearch-6.2.2/config/jvm.options中配置elasticsearch的jvm参数：
+
+```
+-Djava.security.policy=/home/servers/elasticsearch-6.2.2/plugins/ranger-elasticsearch-plugin/plugin-security.policy
+```
+
+重启es。**注意：在启动之前，要检查/home/servers/elasticsearch-6.2.2/plugins/有没有`.ranger-elasticsearch-plugin`开头的隐藏目录，有的话就删除，否则es会报错。**
+
+发请求验证：
+
+```
+# curl -u hadoop:hadoop http://centos01:9200/_cluster/health?pretty
+```
+
+`-u`参数指定用户名和密码，用户名必须是ranger的policy里配置的user，密码随便写。
+
+未解决问题：
+
+- es日志中报`java.lang.SecurityException`，不知道什么原因，但不影响审计日志和权限控制。
+- kibana中配置的es用户名和密码是`hadoop`，可以在ranger中看到kibana访问es的审计日志，而且是放行的，但是kibana界面上还是无法显示结果。
+- 如果想使用其他用户名，需要在centos01上创建新用户，例如创建用户kibana，然后ranger-usersync会同步到ranger-admin上，将用户kibana配置到ranger policy里，这样就可以使用kibana用户访问es了，譬如把它给kibana服务使用。但是密码可以随便写。
 
 ### 10. Knox plugin
 
@@ -773,7 +909,7 @@ javax_net_ssl_trustStorePassword=changeit
 knox.url = https://localhost:8443/gateway/admin/api/v1/topologies
 ```
 
-#### 在ranger-admin上创建Knox Service：
+#### 在ranger-admin上创建Knox Service
 
 ```
 Service Name = knoxdev  // 与REPOSITORY_NAME配置一致
@@ -784,7 +920,7 @@ knox.url = https://localhost:8443/gateway/admin/api/v1/topologies
 
 在ranger-admin上查看Plugins状态是否是200。
 
-## 三、Ranger授权
+# 三、Ranger授权
 
 ### 1. 参考
 

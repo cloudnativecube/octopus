@@ -1,4 +1,162 @@
-## elasticsearch
+# Elasticsearch-6.2.2
+
+## 概述
+
+- 下载：https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.2.2.tar.gz
+- 文档：https://www.elastic.co/guide/en/elasticsearch/reference/6.2/index.html
+
+## 部署
+
+### 1.环境
+
+- 关于jdk版本：https://www.elastic.co/guide/en/elasticsearch/reference/6.2/_early_access_check.html
+
+  这里使用jdk为jdk-8u271-linux-x64.tar.gz。
+
+- 关于节点角色：https://www.elastic.co/guide/en/elasticsearch/reference/6.2/modules-node.html
+
+节点角色：
+
+```
+master,data centos01
+master,data centos02
+master,data centos03
+```
+
+### 2.系统配置
+
+1.limits配置
+
+文件/etc/security/limits.conf：
+
+```
+hadoop  hard nofile 65536
+hadoop  soft nofile 65536
+```
+
+其他系统配置请参考：https://www.elastic.co/guide/en/elasticsearch/reference/6.2/bootstrap-checks.html
+
+### 3.安装
+
+1.配置文件config/elasticsearch.yml
+
+```
+cluster.name: octopus-es
+node.name: centos01
+path.data: /var/lib/elasticsearch
+network.host: centos01
+http.port: 9200
+discovery.zen.ping.unicast.hosts: ["centos01", "centos02", "centos03"]
+discovery.zen.minimum_master_nodes: 1
+```
+
+2.创建数据目录
+
+```
+# mkdir /var/lib/elasticsearch
+# chown -R hadoop:hadoop /var/lib/elasticsearch
+```
+
+3.jdk配置
+
+将jdk-8u271-linux-x64.tar.gz解压之后放到elasticsearch目录：
+
+```
+/home/servers/elasticsearch-6.2.2/jdk1.8.0_271
+```
+
+在bin/elasticsearch中添加JAVA_HOME：
+
+```
+JAVA_HOME=/home/servers/elasticsearch-6.2.2/jdk1.8.0_271
+```
+
+4.启动
+
+```
+bin/elasticsearch -d
+```
+
+### 4.xpack(不需要安装)
+
+文档：https://www.elastic.co/guide/en/elasticsearch/reference/6.2/installing-xpack-es.html
+
+安装：
+
+```
+# bin/elasticsearch-plugin install file:///home/servers/elasticsearch-6.2.2/x-pack-6.2.2.zip
+-> Downloading file:///home/servers/elasticsearch-6.2.2/x-pack-6.2.2.zip
+[=================================================] 100%
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@     WARNING: plugin requires additional permissions     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+* java.io.FilePermission \\.\pipe\* read,write
+* java.lang.RuntimePermission accessClassInPackage.com.sun.activation.registries
+* java.lang.RuntimePermission getClassLoader
+* java.lang.RuntimePermission setContextClassLoader
+* java.lang.RuntimePermission setFactory
+* java.net.SocketPermission * connect,accept,resolve
+* java.security.SecurityPermission createPolicy.JavaPolicy
+* java.security.SecurityPermission getPolicy
+* java.security.SecurityPermission putProviderProperty.BC
+* java.security.SecurityPermission setPolicy
+* java.util.PropertyPermission * read,write
+See http://docs.oracle.com/javase/8/docs/technotes/guides/security/permissions.html
+for descriptions of what these permissions allow and the associated risks.
+
+Continue with installation? [y/N]y
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@        WARNING: plugin forks a native controller        @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+This plugin launches a native controller that is not subject to the Java
+security manager nor to system call filters.
+
+Continue with installation? [y/N]y
+-> Installed x-pack with: x-pack-core,x-pack-deprecation,x-pack-graph,x-pack-logstash,x-pack-ml,x-pack-monitoring,x-pack-security,x-pack-upgrade,x-pack-watcher
+```
+
+卸载：
+
+```
+# bin/elasticsearch-plugin remove x-pack --purge
+```
+
+# Kibana-6.2.2
+
+## 概述
+
+下载：https://artifacts.elastic.co/downloads/kibana/kibana-6.2.2-linux-x86_64.tar.gz
+
+文档：https://www.elastic.co/guide/en/kibana/6.2/index.html
+
+## 部署
+
+1.配置文件config/kibana.yml
+
+```
+server.port: 5601
+server.host: "centos01"
+server.name: "octopus-kibana"
+elasticsearch.url: ["http://centos01:9200"]
+```
+
+2.启动
+
+```
+nohup bin/kibana 2>&1 > kibana.log &
+```
+
+在浏览器上打开UI：http://centos01:5601/ 。
+
+控制台工具：http://centos01:5601/app/kibana#/dev_tools/console?_g=()
+
+kibana是node.js服务，如果要查看进程，需要用`ps -ef | grep node`。
+
+3.加载数据集
+
+按此文档测试一下加载数据集：https://www.elastic.co/guide/en/kibana/6.2/tutorial-load-dataset.html 。
+
+# Elasticsearch-7.9.2
 
 ## 概述
 
@@ -33,8 +191,8 @@ data centos04
 文件/etc/security/limits.conf：
 
 ```
-hadoop  hard nofile 65535
-hadoop  soft nofile 65535
+hadoop  hard nofile 65536
+hadoop  soft nofile 65536
 ```
 
 #### sysctl配置
@@ -134,7 +292,7 @@ network.host: centos02
 }
 ```
 
-# Kibana
+# Kibana-7.9.2
 
 ### 概述
 
