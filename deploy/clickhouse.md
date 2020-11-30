@@ -239,7 +239,11 @@ sudo chown -R clickhouse:clickhouse /home/servers/clickhouse-20.10.2.20
     <distributed_ddl>
         <path>/clickhouse/task_queue/ddl</path>
     </distributed_ddl>
-
+    
+    <!-- 添加复制表默认zk path，使用ReplicatedMergeTree表时可以忽略参数-->
+    <default_replica_path>/clickhouse/tables/{shard}/{database}/{table}</default_replica_path>
+    <default_replica_name>{replica}</default_replica_name>
+  
     <graphite_rollup_example>
         <pattern>
             <regexp>click_cost</regexp>
