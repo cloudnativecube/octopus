@@ -16,7 +16,7 @@ hadoop> source ~/.bashrc
 创建hdfs目录
 ```
 hadoop> hadoop fs -mkdir       /tmp
-hadoop> hadoop fs -mkdir       /user/hive/warehouse
+hadoop> hadoop fs -mkdir -p    /user/hive/warehouse
 hadoop> hadoop fs -chmod g+w   /tmp
 hadoop> hadoop fs -chmod g+w   /user/hive/warehouse
 ```
