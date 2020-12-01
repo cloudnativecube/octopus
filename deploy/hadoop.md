@@ -76,7 +76,6 @@ export HADOOP_COMMON_HOME=${HADOOP_HOME}
 export HADOOP_HDFS_HOME=${HADOOP_HOME}
 export HADOOP_YARN_HOME=${HADOOP_HOME}
 export HADOOP_CONF_DIR=${HADOOP_HOME}/etc/hadoop
-export HTTPFS_CONFIG=${HADOOP_HOME}/etc/hadoop
 export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
 hadoop> source ~/.bashrc
 ```
@@ -231,7 +230,7 @@ start-yarn.sh
 ```
 ##### 启动jobhistoryserver
 ```
-mapred --daemon start historyserver
+mr-jobhistory-daemon.sh start historyserver
 ```
 
 ##### WebUI
