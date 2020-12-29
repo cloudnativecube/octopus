@@ -68,19 +68,37 @@ output {
 
 ### 配置参数
 
-| name        | type   | required | default value | 备注                                                         |
-| ----------- | ------ | -------- | ------------- | :----------------------------------------------------------- |
-| host        | string | yes      | -             | 多个host配置方式为：host1:port,host2:port...，该方式为clickhouse-jdbc的UrlParser支持的配置，每次获取连接getConnection()时会随机使用一个host； |
-| database    | string | yes      | -             |                                                              |
-| table       | string | yes      | -             |                                                              |
-| username    | string | no       | -             | 忽略时clickhouse-jdbc会使用default用户                       |
-| password    | string | no       | -             |                                                              |
-| bulk_size   | number | no       | 20000         | 每批写入的数据量                                             |
-| retry       | number | no       | 1             |                                                              |
-| retry_codes | array  | no       | []            | 需要重试的clickhouse错误码，注意如果在retry配置的重试次数后依然没有成功，将丢弃该批次数据，不会抛异常；如果不配置该字段，遇到异常会抛出异常，spark会重跑失败的task，注意此时可能有数据重复的问题。 |
-| fields      | array  | no       | -             | 需要输出到ClickHouse的数据字段，即可以过滤source中不需要的字段，指定该字段时处理逻辑分为几种情况，见下文字段详解 |
-| cluster     | string | no       | -             | 若需要自动建表，由于目前默认建分布式表+复制表，此时cluster是required；若表已存在，在overwrite模式下，如果直接操作单表，且配置了多个host时，需要指定cluster，否则truncate只在一台host上执行（overwrite模式下如果直接操作单表+多host这种配置，需要注意cluster和指定的host是否匹配，否则清理数据的节点跟配置的host可能不一致）。 |
-| save_mode   | string | no       | "error"       | 表已存在时的写入模式："error"-报错；"overwrite"-覆盖；"append"-追加 |
+| name                   | type   | required                  | default value | 备注                                                         |
+| ---------------------- | ------ | ------------------------- | ------------- | :----------------------------------------------------------- |
+| host                   | string | yes                       | -             | 多个host配置方式为：host1:port,host2:port...，该方式为clickhouse-jdbc的UrlParser支持的配置，每次获取连接getConnection()时会随机使用一个host； |
+| database               | string | yes                       | -             |                                                              |
+| table                  | string | yes                       | -             |                                                              |
+| username               | string | no                        | -             | 忽略时clickhouse-jdbc会使用default用户                       |
+| password               | string | no                        | -             |                                                              |
+| bulk_size              | number | no                        | 20000         | 每批写入的数据量                                             |
+| retry                  | number | no                        | 1             |                                                              |
+| retry_codes            | array  | no                        | []            | 需要重试的clickhouse错误码，注意如果在retry配置的重试次数后依然没有成功，将丢弃该批次数据，不会抛异常；如果不配置该字段，遇到异常会抛出异常，spark会重跑失败的task，注意此时可能有数据重复的问题。 |
+| fields                 | array  | no                        | -             | 需要输出到ClickHouse的数据字段，即可以过滤source中不需要的字段，指定该字段时处理逻辑分为几种情况，见下文fields字段详解 |
+| cluster                | string | no(required in some case) | -             | 若需要自动建表，当默认自动建分布式表+复制表时，**此时cluster是required**；其他情况若配置了cluster，会自动获取cluster对应的hosts，进行数据分发写入及overwrite模式下的truncate等操作，此时host参数仅用来连接集群获取集群信息； |
+| save_mode              | string | no                        | "error"       | 表已存在时的写入模式："error"-报错；"overwrite"-覆盖；"append"-追加 |
+| create_clause_local    | string | no                        |               | **自动建表参数**（以下所有自动建表参数均只在table不存在时才会涉及），create_clause_local的值是一条完整的create table sql，该参数主要用来支持用户自定义建表语句，能更灵活的指定字段及适合的引擎，具体用法见下文 |
+| order_keys             | array  | no(required in some case) |               | **自动建表参数**，如果用户没有使用create_clause_local建表语句建表，本插件也可自动生成建表语句（目前默认建分布式表+复制表），**此时order_keys为required** |
+| nullable_fields        | array  | no                        | []            | **自动建表参数**，指定类型为Nullable的列                     |
+| low_cardinality_fields | array  | no                        | []            | **自动建表参数**，指定类型为LowCardinality的列               |
+| partition_expr         | array  | no                        |               | **自动建表参数**，指定分区表达式                             |
+|                        |        |                           |               |                                                              |
+
+##### table
+
+输出的clickhouse表名，分以下两种处理逻辑：
+
+1.表已存在时：
+
+​    a）如table为本地表，且host参数配置为多个host时（也可指定cluster），数据会随机分布在多个host上（推荐此种方式）；
+
+​    b）如为分布式表，会解析分布式表对应的cluster参数获取本地表的host，然后随机写入本地表，注意此时分布式表配置的分片规则无效，会随机分片；
+
+2.表不存在时，会使用该表名创建本地表，并自动创建一个分布式表(分布式表名添加后缀，格式为：table+"_all")，此时会通过cluster参数获取本地表的host，写入数据时直接写入本地表。
 
 ##### fields
 
@@ -90,7 +108,7 @@ output {
 
 ​    a）需要检查每个field是否在表中存在，如不存在，在checkConfig阶段返回校验失败；
 
-​    b）需要检查每个field在表中对应的数据类型本插件是否支持（支持的数据类型见表XXXXX），如不支持，在checkConfig阶段返回校验失败；
+​    b）需要检查每个field在表中对应的数据类型本插件是否支持（详见支持的数据类型表），如不支持，在checkConfig阶段返回校验失败；
 
 ​    c）对于clickhouse中存在但数据源中不存在的field，赋给该数据类型的clickhouse默认值；
 
@@ -102,7 +120,17 @@ output {
 
 ​    b）如忽略该字段，会自动根据数据源的Schema适配，其他逻辑同上；
 
+##### create_clause_local
 
+create_clause_local主要用来支持用户自定义建表语句，主要用法如下：
+
+​    1.建表语句里支持通过配置%fields变量自动生成fields的名称及类型；
+
+​    2.建表语句若包含on cluster语法，此时会在指定集群的host上都新建该表，此时用户无需指定cluster参数或者多个host，也会自动创建多个表；
+
+​    3.如果没有使用on cluster语法，仍按解析host和cluster参数的方式（即cluster为主，host为辅），获取具体的host节点，分别执行建表；
+
+​    4.另外此参数一般用来建本地表，且表名与table一致，否则执行到数据写入操作时，仍会报表不存在的错误，查询时如需使用分布式表需要另行创建；
 
 ### 支持的数据类型
 
@@ -121,7 +149,7 @@ output {
 | DateTime           | TimestampType           | yyyy-MM-dd HH:mm:ss 格式                                     |
 | Decimal            | DecimalType             |                                                              |
 | Array(T)           | ArrayType               | Array不可以为NULL，源数据为NULL时会写入默认值，即空数组[]，但Array里的元素T可以为Nullable以及LowCardinality类型。 |
-| Nullable(T)        | -                       | clickhouse中普通的类型不可以为NULL，遇到NULL会赋默认值，如果要保留NULL值，需要配置nullable参数指定使用Nullable类型的列，注意T不可为Array和LowCardinality类型。 |
+| Nullable(T)        | -                       | clickhouse中普通的类型不可以为NULL，遇到NULL会赋默认值，如果要保留NULL值，需要配置nullable_fields参数指定使用Nullable类型的列，注意T不可为Array和LowCardinality类型。 |
 | LowCardinality(T)  | -                       | T不可为Decimal和Array类型，另外UIntX/IntX这样的数值类型是否支持指定LowCardinality取决于clickhouse集群的配置（set allow_suspicious_low_cardinality_types=1，不推荐使用该配置，会影响8字节以内的数据类型的处理效率）。 |
 
 关于Array，Nullable以及LowCardinality类型的封装顺序为：
