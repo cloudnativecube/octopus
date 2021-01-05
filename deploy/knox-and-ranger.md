@@ -1,3 +1,9 @@
+# CDH Security文档
+
+社区版knox和ranger的文档不完整，维护较少，可以参考CDH的产品使用文档：
+
+https://docs.cloudera.com/runtime/7.2.1/howto-security.html
+
 # 一、Knox
 
 用户文档：http://knox.apache.org/books/knox-1-4-0/user-guide.html
@@ -420,6 +426,13 @@ XAAUDIT.SOLR.MAX_FLUSH_INTERVAL_MS=1000
 XAAUDIT.SOLR.SOLR_URL=http://centos01:8983/solr/ranger_audits
 ```
 
+创建spool目录：
+
+```
+# mkdir -p /var/log/hadoop/hdfs/audit/solr/spool
+# chown -R hadoop:hadoop /var/log/hadoop
+```
+
 用root执行：
 
 ```
@@ -486,6 +499,13 @@ XAAUDIT.SOLR.MAX_FLUSH_INTERVAL_MS=1000
 XAAUDIT.SOLR.SOLR_URL=http://centos01:8983/solr/ranger_audits
 ```
 
+创建spool目录：
+
+```
+# mkdir -p /var/log/hadoop/yarn/audit/solr/spool
+# chown -R hadoop:hadoop /var/log/hadoop
+```
+
 执行：
 
 ```
@@ -545,6 +565,13 @@ XAAUDIT.SOLR.MAX_FLUSH_INTERVAL_MS=1000
 XAAUDIT.SOLR.SOLR_URL=http://centos01:8983/solr/ranger_audits
 ```
 
+创建spool目录：
+
+```
+# mkdir -p /var/log/hive/audit/solr/spool
+# chown -R hadoop:hadoop /var/log/hive
+```
+
 执行：
 
 ```
@@ -552,6 +579,8 @@ XAAUDIT.SOLR.SOLR_URL=http://centos01:8983/solr/ranger_audits
 // 省略中间输出
 Ranger Plugin for hive has been enabled. Please restart hive to ensure that changes are effective.
 ```
+
+在hive-3.1.2/conf/hiveserver2-site.xml中会增加关于插件的配置参数。
 
 重启hiveserver2：
 
@@ -633,7 +662,7 @@ Ranger Plugin for hbase has been enabled. Please restart hbase to ensure that ch
 
 ```
 # mkdir -p /var/log/hbase/audit/solr/spool
-# chown -R hadoop:hadoop /var/log/hbase/audit/solr/spool
+# chown -R hadoop:hadoop /var/log/hbase
 ```
 
 重启hbase：
@@ -701,7 +730,7 @@ XAAUDIT.SOLR.SOLR_URL=http://centos01:8983/solr/ranger_audits
 
 ```
 # mkdir -p /var/log/elasticsearch/audit/solr/spool
-# chown -R hadoop:hadoop /var/log/elasticsearch/audit/solr/spool
+# chown -R hadoop:hadoop /var/log/elasticsearch
 ```
 
 从hdfs plugin目录把jar包拷过来，同时拷贝到两个目录（不知道为什么缺少jar包）：
@@ -812,6 +841,13 @@ XAAUDIT.SOLR.IS_ENABLED=false
 XAAUDIT.SOLR.MAX_QUEUE_SIZE=1
 XAAUDIT.SOLR.MAX_FLUSH_INTERVAL_MS=1000
 XAAUDIT.SOLR.SOLR_URL=http://centos01:8983/solr/ranger_audits
+```
+
+创建spool目录：
+
+```
+# mkdir -p /var/log/knox/audit/solr/spool
+# chown -R hadoop:hadoop /var/log/knox
 ```
 
 用root执行：

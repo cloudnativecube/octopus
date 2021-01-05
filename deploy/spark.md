@@ -60,7 +60,15 @@ centos04
 (4) 启动thriftserver：
 
 ```
-sbin/start-thriftserver.sh
+# sbin/start-thriftserver.sh
+```
+
+(5) 验证
+
+注意，要使用spark目录里的bin/beeline。
+
+```
+# bin/beeline -n hadoop -u jdbc:hive2://localhost:10003
 ```
 
 #### History Server
@@ -68,6 +76,44 @@ sbin/start-thriftserver.sh
 在master节点上：
 
 ```
-sbin/start-history-server.sh
+# sbin/start-history-server.sh
 ```
+
+## 监控指标
+
+spark配置文件conf/metrics.properties：
+
+```
+*.sink.jmx.class=org.apache.spark.metrics.sink.JmxSink
+```
+
+java-agent下载：https://mvnrepository.com/artifact/io.prometheus.jmx/jmx_prometheus_javaagent/0.14.0
+
+prometheus-config.xml：
+
+```
+---
+lowercaseOutputName: true
+attrNameSnakeCase: true
+rules:
+- pattern: metrics<name=(\S+)\.driver\.(\S+)\.StreamingMetrics\.streaming\.(\S+)><>Value
+  name: spark_streaming_$3
+  labels:
+    app_id: "$1"
+    app_name: "$2"
+- pattern: metrics<name=(\S+)\.driver\.(BlockManager|DAGScheduler)\.(\S+)><>Value
+  name: spark_$2_$3
+  labels:
+    app_id: "$1"
+```
+
+启动thriftserver：
+
+```
+# sbin/start-thriftserver.sh --conf "spark.driver.extraJavaOptions=-javaagent:/home/madianjun/jmx_prometheus_javaagent-0.14.0.jar=9997:/home/madianjun/prometheus-config.yml"
+```
+
+参考：
+
+- https://argus-sec.com/monitoring-spark-prometheus/
 
