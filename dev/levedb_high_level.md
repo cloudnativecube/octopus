@@ -97,6 +97,7 @@ for (; iter->Valid(); iter->Next()) {
 // 再次进入BackgroundCompaction(MaybeScheduleCompaction)
 // 经过一系列调用到函数DoCompactionWork
 // TODO: Compaction需要详细了解, 还没找到如何删除垃圾数据
+// TODO: SSTable 的逻辑结构， write 过程
 
 
 ```
@@ -200,7 +201,7 @@ Status Version::Get(const ReadOptions& options, const LookupKey& k,
       saver.ucmp = ucmp;
       saver.user_key = user_key;
       saver.value = value;
-      // TODO 详细过程分析
+      // TODO 详细过程分析， SSTable 的去读过程。 后续会专门针对SSTable 做介绍。
       s = vset_->table_cache_->Get(options, f->number, f->file_size, ikey,
                                    &saver, SaveValue);
       if (!s.ok()) {
