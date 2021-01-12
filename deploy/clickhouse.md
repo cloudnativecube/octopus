@@ -1,6 +1,6 @@
 # Clickhouse安装与使用
 
-### 1.版本信息：v20.10.2.20
+### 1.版本信息：v20.12.3.3
 
 ### 2.安装步骤：
 
@@ -13,17 +13,22 @@ sudo yum-config-manager --add-repo https://repo.clickhouse.tech/rpm/clickhouse.r
 sudo yum install clickhouse-server clickhouse-client
 ```
 
-如服务器无网络权限，可从github下载后上传到服务器安装：https://github.com/ClickHouse/ClickHouse/releases/tag/v20.10.2.20-stable：
+如服务器无网络权限，可从github下载后上传到服务器安装（https://github.com/ClickHouse/ClickHouse/releases/tag/v20.12.3.3-stable），共需下载以下四个安装包:
+
+clickhouse-common-static-20.12.3.3-2.x86_64.rpm: https://github.com/ClickHouse/ClickHouse/releases/download/v20.12.3.3-stable/clickhouse-common-static-20.12.3.3-2.x86_64.rpm
+
+clickhouse-common-static-dbg-20.12.3.3-2.x86_64.rpm(binary with debug info): https://github.com/ClickHouse/ClickHouse/releases/download/v20.12.3.3-stable/clickhouse-common-static-dbg-20.12.3.3-2.x86_64.rpm
+
+clickhouse-server-20.12.3.3-2.noarch.rpm: https://github.com/ClickHouse/ClickHouse/releases/download/v20.12.3.3-stable/clickhouse-server-20.12.3.3-2.noarch.rpm
+
+clickhouse-client-20.12.3.3-2.noarch.rpm: https://github.com/ClickHouse/ClickHouse/releases/download/v20.12.3.3-stable/clickhouse-client-20.12.3.3-2.noarch.rpm
 
 ```
-需要下载以下三个安装包
-clickhouse-client-20.10.2.20-2.noarch.rpm
-clickhouse-server-20.10.2.20-2.noarch.rpm
-clickhouse-common-static-20.10.2.20-2.x86_64.rpm
-上传到服务器后，yum安装rpm包:
-sudo yum install clickhouse-common-static-20.10.2.20-2.x86_64.rpm
-sudo yum install clickhouse-server-20.10.2.20-2.noarch.rpm
-sudo yum install clickhouse-client-20.10.2.20-2.noarch.rpm
+#上传到服务器后，yum安装rpm包:
+sudo yum install clickhouse-common-static-20.12.3.3-2.x86_64.rpm
+sudo yum install clickhouse-common-static-dbg-20.12.3.3-2.x86_64.rpm
+sudo yum install clickhouse-server-20.12.3.3-2.noarch.rpm
+sudo yum install clickhouse-client-20.12.3.3-2.noarch.rpm
 ```
 
 ### 3.配置：
@@ -31,13 +36,14 @@ sudo yum install clickhouse-client-20.10.2.20-2.noarch.rpm
 创建路径并赋权：
 
 ```
-mkdir -p /home/servers/clickhouse-20.10.2.20/etc/clickhouse-server/
-sudo chown -R clickhouse:clickhouse /home/servers/clickhouse-20.10.2.20
+mkdir -p /home/servers/clickhouse-20.12.3.3/etc/clickhouse-server/
+sudo chown -R clickhouse:clickhouse /home/servers/clickhouse-20.12.3.3
+ln -s /home/servers/clickhouse-20.12.3.3 /home/servers/clickhouse
 ```
 
 #### 3.1 配置config.xml
 
-修改配置文件 /etc/clickhouse-server/config.xml，并分发到所有节点（注释的位置是需要修改的元素，其他可忽略，使用默认配置）：
+创建配置文件 /etc/clickhouse-server/config.d/config.xml，并分发到所有节点（注释的位置是需要修改的元素，其他可忽略，使用默认配置）：
 
 ```xml
 <?xml version="1.0"?>
@@ -45,8 +51,8 @@ sudo chown -R clickhouse:clickhouse /home/servers/clickhouse-20.10.2.20
     <logger>
         <level>trace</level>
         <!-- 修改日志路径 -->
-        <log>/home/servers/clickhouse-20.10.2.20/log/clickhouse-server/clickhouse-server.log</log>
-        <errorlog>/home/servers/clickhouse-20.10.2.20/log/clickhouse-server/clickhouse-server.err.log</errorlog>
+        <log>/home/servers/clickhouse/log/clickhouse-server/clickhouse-server.log</log>
+        <errorlog>/home/servers/clickhouse/log/clickhouse-server/clickhouse-server.err.log</errorlog>
         <size>1000M</size>
         <count>10</count>
     </logger>
@@ -62,9 +68,9 @@ sudo chown -R clickhouse:clickhouse /home/servers/clickhouse-20.10.2.20
 
     <openSSL>
         <server> 
-            <certificateFile>/home/servers/clickhouse-20.10.2.20/etc/clickhouse-server/server.crt</certificateFile>
-            <privateKeyFile>/home/servers/clickhouse-20.10.2.20/etc/clickhouse-server/server.key</privateKeyFile>
-            <dhParamsFile>/home/servers/clickhouse-20.10.2.20/etc/clickhouse-server/dhparam.pem</dhParamsFile>
+            <certificateFile>/home/servers/clickhouse/etc/clickhouse-server/server.crt</certificateFile>
+            <privateKeyFile>/home/servers/clickhouse/etc/clickhouse-server/server.key</privateKeyFile>
+            <dhParamsFile>/home/servers/clickhouse/etc/clickhouse-server/dhparam.pem</dhParamsFile>
             <verificationMode>none</verificationMode>
             <loadDefaultCAFile>true</loadDefaultCAFile>
             <cacheSessions>true</cacheSessions>
@@ -100,13 +106,13 @@ sudo chown -R clickhouse:clickhouse /home/servers/clickhouse-20.10.2.20
     <mark_cache_size>5368709120</mark_cache_size>
 
     <!-- 修改数据存储路径，结尾带斜线 -->
-    <path>/home/servers/clickhouse-20.10.2.20/data/</path>
+    <path>/home/servers/clickhouse/data/</path>
 
     <!-- 修改临时数据存储路径，Path to temporary data for processing hard queries. -->
-    <tmp_path>/home/servers/clickhouse-20.10.2.20/tmp/</tmp_path>
+    <tmp_path>/home/servers/clickhouse/tmp/</tmp_path>
 
     <!-- 修改file类型table的数据路径，Directory with user provided files that are accessible by 'file' table function. -->
-    <user_files_path>/home/servers/clickhouse-20.10.2.20/data/user_files/</user_files_path>
+    <user_files_path>/home/servers/clickhouse/data/user_files/</user_files_path>
 
     <user_directories>
         <users_xml>
@@ -114,7 +120,7 @@ sudo chown -R clickhouse:clickhouse /home/servers/clickhouse-20.10.2.20
         </users_xml>
         <local_directory>
             <!-- 修改使用sql创建的用户存储路径，Path to folder where users created by SQL commands are stored. -->
-            <path>/home/servers/clickhouse-20.10.2.20/data/access/</path>
+            <path>/home/servers/clickhouse/data/access/</path>
         </local_directory>
     </user_directories>
 
@@ -275,17 +281,17 @@ sudo chown -R clickhouse:clickhouse /home/servers/clickhouse-20.10.2.20
     </graphite_rollup_example>
 
     <!-- 修改schema路径 -->
-    <format_schema_path>/home/servers/clickhouse-20.10.2.20/data/format_schemas/</format_schema_path>
+    <format_schema_path>/home/servers/clickhouse/data/format_schemas/</format_schema_path>
     
     <!-- 修改子配置文件路径 -->
-    <include_from>/home/servers/clickhouse-20.10.2.20/etc/clickhouse-server/metrika.xml</include_from>
+    <include_from>/home/servers/clickhouse/etc/clickhouse-server/metrika.xml</include_from>
   
 </yandex>
 ```
 
 #### 3.2 配置metrika.xml
 
-创建文件 sudo vim /home/servers/clickhouse-20.10.2.20/etc/clickhouse-server/metrika.xml
+创建文件 sudo vim /home/servers/clickhouse/etc/clickhouse-server/metrika.xml
 
 ```xml
 <yandex>
@@ -386,7 +392,7 @@ sudo chown -R clickhouse:clickhouse /home/servers/clickhouse-20.10.2.20
 
 #### 3.3 配置user.xml
 
-修改配置文件 /etc/clickhouse-server/user.xml，并分发到所有节点，该文件主要用于设置用户权限
+创建配置文件 /etc/clickhouse-server/users.d/user.xml，并分发到所有节点，该文件主要用于设置用户权限
 
 ```xml
 <?xml version="1.0"?>
@@ -465,6 +471,6 @@ sudo systemctl status clickhouse-server
 为了便于查看日志，可以给日志路径赋权：
 
 ```shell
-sudo chmod -R +xr /home/servers/clickhouse-20.10.2.20/log
+sudo chmod -R +xr /home/servers/clickhouse/log
 ```
 
