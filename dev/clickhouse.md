@@ -36,7 +36,6 @@ $ cd ..
 
 ```
 # ./build/programs/clickhouse server -C ./programs/server/config.xml
-
 ```
 
 在CLion上选择Run->Attach to process，输入clickhouse并选择正在运行的server进程。
