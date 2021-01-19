@@ -95,15 +95,8 @@ for (; iter->Valid(); iter->Next()) {
 // 检查是否需要进行步骤3.2， 3.3
 // 再次进入BackgroundCompaction(MaybeScheduleCompaction)
 // 经过一系列调用到函数DoCompactionWork
-<<<<<<< HEAD:dev/leveldb/leveldb_high_level_介绍.md
 // TODO: Compaction需要详细了解，后续展开
 // TODO: SSTable 的写过程。 后续会展开。
-=======
-// TODO: Compaction需要详细了解, 还没找到如何删除垃圾数据
-// TODO: SSTable 的逻辑结构， write 过程
-
-
->>>>>>> 21f9e3a2753c9bdd2f2ad2d33ed8d0b765ca89fe:dev/levedb_high_level.md
 ```
 #### Get 过程
 1. 遍历wtable，如果找到则返回，否则进入下一步
@@ -205,11 +198,7 @@ Status Version::Get(const ReadOptions& options, const LookupKey& k,
       saver.ucmp = ucmp;
       saver.user_key = user_key;
       saver.value = value;
-<<<<<<< HEAD:dev/leveldb/leveldb_high_level_介绍.md
       // TODO 详细过程分析， SSTable 的读过程，后续会展开
-=======
-      // TODO 详细过程分析， SSTable 的去读过程。 后续会专门针对SSTable 做介绍。
->>>>>>> 21f9e3a2753c9bdd2f2ad2d33ed8d0b765ca89fe:dev/levedb_high_level.md
       s = vset_->table_cache_->Get(options, f->number, f->file_size, ikey,
                                    &saver, SaveValue);
       if (!s.ok()) {
