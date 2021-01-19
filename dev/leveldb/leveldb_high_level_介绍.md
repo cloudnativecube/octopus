@@ -48,27 +48,26 @@ internal_key = user_key + sequence + type
 * internal_key_size 和 value_size 都要采用 varint 整数编码。(为什么采用变长编码？ 直接使用`uint64`有啥不好的呢？)
 
 ### LOG
-还没有关注这块，先当个黑盒。
 write数据时会先写入log，再写入wtable.
 简单来说LevelDB 遇到突发停机事故，没有持久化的 wtable 和 rtable 数据就会丢失。可以通过LOG 进行数据库恢复.
-还有一个不懂的数据结构：`Log Structured Merge Trees
-### DISK
+
+### DISK(LSM-Tree)
 ![disk](https://pic1.zhimg.com/v2-d64879b4d2f2e00dc9faf08f5bb9b2b8_r.jpg)
 * SSTable 表示 Sorted String Table，文件里所有的 Key(internel_key) 都会有序的. 
 * Minor Compaction 表示从rtable 中dump 数据
 * Major Compaction 表示从 n 层 sst 文件下沉到 n+1 层 sst 文件.
 * L0 之间的文件中的key 不是全局排序，即整体无序， 当个文件中有序
-* L1-L7 每层的SSTable(多个) 是整体有序的。不同层间是无序的。
+* L1-L6 每层的SSTable(多个) 是整体有序的。不同层间是无序的。
 * Major Compaction 采用多路归并。
 
 ### Write/Get 流程
 #### write 过程
 1. wtable size超过阈值则wtable 转化成 rtable,调度器异步的进行步骤3。进入步骤2
 2. 先写Log，再把数据更新到wtable. 写流程完毕
-3. 调度器负责异步compaction
+3. 调度器负责异步compaction(以下三个步骤没有顺序依赖关系)
    1. 把rtable 刷到磁盘, 然后释放相应的Log文件的空间。即 Minor Compaction 
    2. L0 SST文件个数超过阈值，进行Major Compaction。（归并排序）
-   3. L1-L7 同理。
+   3. L1-L6 同理。
 ```
 // 步骤1
 Status status = MakeRoomForWrite(updates == nullptr);
@@ -80,8 +79,8 @@ status = WriteBatchInternal::InsertInto(updates, mem_);
 imm_ = mem_; // wtable 转成rtable
 mem_ = new MemTable(internal_comparator_); 
 // 步骤3， 异步进行 compaction
-MaybeScheduleCompaction();
-// 经过一系列的调用，会进入到BuildTable, 进入步骤3.1
+MaybeScheduleCompaction 会调用到BackgroundCompaction
+// 如果rtabel 有数据，则进入步骤3.1. 经过一系列的调用，会进入到BuildTable.
 // meta 记录最大值最小值
 // TODO: 假设操作为， PUT(KEY, V1), PUT(KEY, V2), DELETE(KEY)
 // 那么在保存到磁盘时，可以忽略这个KEY的。
@@ -96,10 +95,15 @@ for (; iter->Valid(); iter->Next()) {
 // 检查是否需要进行步骤3.2， 3.3
 // 再次进入BackgroundCompaction(MaybeScheduleCompaction)
 // 经过一系列调用到函数DoCompactionWork
+<<<<<<< HEAD:dev/leveldb/leveldb_high_level_介绍.md
+// TODO: Compaction需要详细了解，后续展开
+// TODO: SSTable 的写过程。 后续会展开。
+=======
 // TODO: Compaction需要详细了解, 还没找到如何删除垃圾数据
 // TODO: SSTable 的逻辑结构， write 过程
 
 
+>>>>>>> 21f9e3a2753c9bdd2f2ad2d33ed8d0b765ca89fe:dev/levedb_high_level.md
 ```
 #### Get 过程
 1. 遍历wtable，如果找到则返回，否则进入下一步
@@ -201,7 +205,11 @@ Status Version::Get(const ReadOptions& options, const LookupKey& k,
       saver.ucmp = ucmp;
       saver.user_key = user_key;
       saver.value = value;
+<<<<<<< HEAD:dev/leveldb/leveldb_high_level_介绍.md
+      // TODO 详细过程分析， SSTable 的读过程，后续会展开
+=======
       // TODO 详细过程分析， SSTable 的去读过程。 后续会专门针对SSTable 做介绍。
+>>>>>>> 21f9e3a2753c9bdd2f2ad2d33ed8d0b765ca89fe:dev/levedb_high_level.md
       s = vset_->table_cache_->Get(options, f->number, f->file_size, ikey,
                                    &saver, SaveValue);
       if (!s.ok()) {
@@ -224,8 +232,7 @@ Status Version::Get(const ReadOptions& options, const LookupKey& k,
   return Status::NotFound(Slice());
 }
 ```
-### TODOLIST
-* Version VersionEdit 概念
+
 
 
 
