@@ -1,6 +1,7 @@
 ## Clickhouse 数据备份和迁移 之 clickhouse-copier
 
 工作目录为：`/home/zhangzhen361/workspace/clickhouse/clickhouse-copier`
+
 假定有两个CK集群, A(port 9000), B(port 9001)。A为源，B为目标
 
 ### 新建一个zookeeper配置
@@ -193,7 +194,7 @@ clickhouse-copier  --daemon \
 ### 注意事项
 1. 两个集群的名字不能一样。(在任务配置文件中显而易见)
 2. 同步任务完成后，（如同步失败）需要再次同步，此时应改变task名称（强烈建议），或者修改目标表名。
-原因是ck会记录如下信息. 如果task名称和表名不改变，则不会执行同步
+原因是zk会记录如下信息. 如果task名称和表名不改变，则不会执行同步
 ```
 [zk: localhost:2181(CONNECTED) 10] ls /clickhouse/copytasks_test/task3/tables
 [ck_cluster_copyed.default.ship_mode_0104_1]
