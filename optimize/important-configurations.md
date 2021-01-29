@@ -1,5 +1,9 @@
 ## spark-sql参数
 
+- spark.sql.autoBroadcastJoinThreshold 默认10MB
+
+  该参数指定在join操作中，被广播的表的最大大小。
+
 - spark.sql.broadcastTimeout
 
   该参数被BroadcastExchangeExec使用。这个超时时间包括collectTime、buildTime、broadcastTime。其中collectTime就是执行child算子的RDD的collect()方法的时间，因为collect()是个action算子，所以会产生一个job。
@@ -92,6 +96,8 @@ org.apache.spark.sql.AnalysisException: `default`.`table` requires that the data
 ## 测试
 
 1.在spark-sql中广播视图
+
+使用hint对表作广播请参考：http://spark.apache.org/docs/latest/sql-ref-syntax-qry-select-hints.html。
 
 ```
 spark-sql> create table t1(a int, b int); //类似创建t2,t3,t4
