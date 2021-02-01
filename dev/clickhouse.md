@@ -32,7 +32,7 @@ clickhouse的编译有以下两种途径：
 - cmake + gcc + make：要求版本gcc-10以上。
 - cmake + clang + ninja：要求版本clang-8以上。
 
-本次编译采用第二种方式。注意，clang的编译要依赖gcc-5.1.0以上，但是5.1.0这个版本有bug，会产生“编译器内部错误：段错误”，所有这里选择了gcc-6.5.0版本。按照gcc-6.5.0的编译方式也可以编译gcc-10.1.0（不要选择gcc-10.2.0，编译过程中有错误）。
+本次编译采用第二种方式。注意，clang的编译要依赖gcc-5.1.0以上，但是5.1.0这个版本有bug，会产生“编译器内部错误：段错误”，所以这里选择了gcc-6.5.0版本。按照gcc-6.5.0的编译方式也可以编译gcc-10.1.0（不要选择gcc-10.2.0，编译过程中有错误）。
 
 ### 安装clang
 
@@ -130,7 +130,7 @@ ninja在编译过程中可能出现如下错误：
 -DENABLE_CLICKHOUSE_COPIER=ON
 ```
 
-如果编译出的clickhouse可执行文件很大，用`strip --strip-debug programs/clickhouse`移除debug信息，可减小文件大小。
+如果不指定`-DCMAKE_BUILD_TYPE=Release`，则按Debug方式编译，编译出的clickhouse可执行文件很大，可以用`strip --strip-debug programs/clickhouse`移除debug信息，减小文件大小（从2G减小到300M+）。
 
 ## build on macOS
 
