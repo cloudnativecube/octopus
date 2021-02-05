@@ -4,11 +4,15 @@
 
   该参数指定在join操作中，被广播的表的最大大小。
 
-- spark.sql.broadcastTimeout
+- spark.sql.broadcastTimeout 默认300s
 
   该参数被BroadcastExchangeExec使用。这个超时时间包括collectTime、buildTime、broadcastTime。其中collectTime就是执行child算子的RDD的collect()方法的时间，因为collect()是个action算子，所以会产生一个job。
 
   问题：当application需要的资源不足时，如果BroadcastExchangeExec所在的stage已经被提交，但是没有资源执行其中的task，那么实际上BroadcastExchangeExec已经被触发了（即它的doExecuteBroadcast()方法已经被调用，这时超时时间开始计时），但是child算子的collect过程又得不到执行，就可能会导致超时。解决方法是调大该参数。
+  
+- spark.sql.sortMergeJoinExec.buffer.in.memory.threshold 默认值无穷大
+
+  在执行sql sort merge join时，会把两个表里满足等值条件行放到一个bufffer里。如果该buffer满了，则把buffer数据spill到文件中。该参数用于限制buffer里数据的行数。但是该参数的默认值是无穷大，如果满足等值条件的行太多，那么buffer大小会一直增涨，直到把内存撑爆，最后报错："Cannot allocate a page of xxx bytes"。解决方法是设置一个合理的大小，比如8388608（8M）。
 
 ## spark-core参数
 
