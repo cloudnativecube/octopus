@@ -2,23 +2,24 @@
 
 ### 软件版本
 
-| 软件           | 版本      | 依赖              |
-| -------------- | --------- | ----------------- |
-| Knox           | 1.1.0     |                   |
-| Ranger         | 2.0.0     | MySQL, Solr       |
-| MySQL(mariadb) | 5.5.65    |                   |
-| Solr           | 8.6.3     | ZooKeeper         |
-| ZooKeeper      | 3.6.2     |                   |
-| Hadoop         | 3.1.4     |                   |
-| Hive           | 3.1.2     | Hadoop            |
-| HBase          | 2.2.6     | Hadoop, ZooKeeper |
-| Phoenix        |           | Hbase             |
-| Spark          | 2.4.7     | Hadoop            |
-| Ambari         | 2.7.5     |                   |
-| ealsticsearch  | 7.9.2     |                   |
-| Kibana         | 7.9.2     | elasticsearch     |
-| Clickhouse     | 20.12.3.3 | ZooKeeper         |
-| Waterdrop      | 2.0.4     | Spark             |
+| 软件           | 版本             | 依赖              |
+| -------------- | ---------------- | ----------------- |
+| Knox           | 1.1.0            |                   |
+| Ranger         | 2.0.0            | MySQL, Solr       |
+| MySQL(mariadb) | 5.5.65           |                   |
+| Solr           | 8.6.3            | ZooKeeper         |
+| ZooKeeper      | 3.6.2            |                   |
+| Hadoop         | 3.1.4            |                   |
+| Hive           | 3.1.2            | Hadoop            |
+| HBase          | 2.2.6            | Hadoop, ZooKeeper |
+| Phoenix        |                  | Hbase             |
+| Spark          | 2.4.7            | Hadoop            |
+| Ambari         | 2.7.5            |                   |
+| ealsticsearch  | 7.9.2            |                   |
+| Kibana         | 7.9.2            | elasticsearch     |
+| Clickhouse     | 20.12.3.3        | ZooKeeper         |
+| Kafka          | kafka_2.12-2.7.0 | ZooKeeper         |
+| Waterdrop      | 2.0.4            | Spark             |
 
 文档：
 
@@ -75,6 +76,7 @@
 | Ranger              | root     | MySQL、Solr      | ranger-admin、ranger-usersync |                             |                  |                  |
 | elasticsearch       | hadoop   |                  | master                        | data                        | data             | data             |
 | Kibana              | hadoop   |                  | Kibana                        |                             |                  |                  |
+| Kafka               | root     | ZooKeeper        | kafka broker                  |                             |                  |                  |
 
 注：
 
@@ -131,3 +133,6 @@ gateway登录密码：admin/admin-password
 
 - http://centos01:9200
 
+### Kafka
+
+- centos01:9092
