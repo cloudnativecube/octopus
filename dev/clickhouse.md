@@ -112,6 +112,8 @@ ninja在编译过程中可能出现如下错误：
 ### 编译clickhouse
 
 ```
+// 当切换branch后，可能需要更新一下依赖的库
+# git submodule update --init --recursive
 // 注意指定clang可执行文件的路径和llvm生成文件的路径
 # cmake3 .. \
     -DCMAKE_C_COMPILER=/export/llvm-project/build/bin/clang \
@@ -131,6 +133,16 @@ ninja在编译过程中可能出现如下错误：
 ```
 
 如果不指定`-DCMAKE_BUILD_TYPE=Release`，则按Debug方式编译，编译出的clickhouse可执行文件很大，可以用`strip --strip-debug programs/clickhouse`移除debug信息，减小文件大小（从2G减小到300M+）。
+
+如果用gcc编译，则cmake使用以下参数：
+
+```
+# cmake3 .. \
+    -DCMAKE_C_COMPILER=/usr/local/bin/gcc \
+    -DCMAKE_CXX_COMPILER=/usr/local/bin/g++ \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DENABLE_CLICKHOUSE_ALL=ON
+```
 
 ## build on macOS
 

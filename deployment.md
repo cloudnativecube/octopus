@@ -58,6 +58,17 @@
 
 部署用户：hadoop、root
 
+### 机器网络
+
+以上4台机器与外网不通，需要使用自己的电脑网卡，或者独立的无线网卡，连接以下任意一个网络（该网络是4台机器连接的无线路由）：
+
+- TP-LINK_598F
+- TP-LINK_5G_598F
+
+网卡使用tenda U12无线网卡，网卡驱动下载地址：
+
+- https://www.tenda.com.cn/product/download/U12.html
+
 ## 组件分布
 
 | 组件                | 启动用户 | 依赖             | centos01                      | centos02                    | centos03         | centos04         |
