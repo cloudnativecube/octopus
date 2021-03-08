@@ -54,7 +54,7 @@ clickhouse的编译有以下两种途径：
 # ./configure && make && make install
 
 // 安装gcc-6.5.0
-# wget d
+# wget http://mirror.hust.edu.cn/gnu/gcc/gcc-6.5.0/gcc-6.5.0.tar.xz
 # cd gcc-6.5.0/
 // 下载依赖的软件包GMP、MPFR、MPC等，在该脚本中可看到它们的版本号。可以去百度上搜索对应的包，拷到本目录再执行此命令。
 # ./contrib/download_prerequisites
