@@ -35,7 +35,7 @@ clickhouse-server.noarch 0:20.8.7.15-2
 0. 暂时注释掉clickhouse zookeeper相关配置，这样做的目的是让当前clickhouse实例上的所有复制表均处于只读状态不允许写入新的数据，等测试新版本无问题后，在去除zookeeper相关配置注释
 1. 启动新版clickhouse-server：systemctl start clickhouse-server
 2. 查看是否启动成功：systemctl status clickhouse-server
-3. 查看clickhouse相关日志有无明显报错信息，clickhouse相关日志的位置我们需要查看config.yml文件的配置，默认是
+3. 查看clickhouse相关日志有无明显报错信息，clickhouse相关日志的位置我们需要查看config.xml文件的配置，默认是
 <log>/var/log/clickhouse-server/clickhouse-server.log</log>
 <errorlog>/var/log/clickhouse-server/clickhouse-server.err.log</errorlog>
 4. 运行clickhouse-client，进入交互终端后确认版本信息，执行：select version()
@@ -58,9 +58,9 @@ systemctl start clickhouse-server (若出现数据损坏无法启动的情况，
 
 **配置**（建议所有集群情况均备份，因为数据量很小）：升级之前建议备份clickhouse相关的一些配置文件,默认是在/etc/clickhouse目录下的所有文件(不同环境若有不同请自行确认，总之要备份好旧配置) 
 
-**元数据**（建议所有集群情况均备份，因为数据量很小）：/var/lib/clickhouse/metadata 元数据本真大小很小，可以很方便的使用物理复制的方式进行，cp -rf metadata metadata_bk
+**元数据**（建议所有集群情况均备份，因为数据量很小）：默认config.xml配置(具体看真实配置) /var/lib/clickhouse/metadata 下存储了元数据，可以很方便的使用物理复制的方式进行，cp -rf metadata metadata_bk
 
-**详细数据**（视情况而定，数据量大与小的区别）：默认config.yml配置 /var/lib/clickhouse/data 下存储了具体的真正数据，该目录的结构是database下是table, table下是更细粒度的partition, 若该数据并不大且使用物理复制的方式系统磁盘容量可以满足复制后的存储大小，那么建议采用物理复制（注意：在做物理复制前请systemctl stop clickhouse-server 防止数据的写入，因为在复制的过程写入数据可能会导致数据损坏）
+**详细数据**（视情况而定，数据量大与小的区别）：默认config.xml配置(具体看真实配置) /var/lib/clickhouse/data 下存储了具体的真正数据，该目录的结构是database下是table, table下是更细粒度的partition, 若该数据并不大且使用物理复制的方式系统磁盘容量可以满足复制后的存储大小，那么建议采用物理复制（注意：在做物理复制前请systemctl stop clickhouse-server 防止数据的写入，因为在复制的过程写入数据可能会导致数据损坏）
 
 若数据非常庞大，本地磁盘无法容纳备份后的数据，那么建议采用[clickhouse-copier](https://clickhouse.tech/docs/en/operations/utilities/clickhouse-copier/)工具将本集群的数据复制到其他容灾集群做容灾备份；
 
