@@ -85,6 +85,10 @@
 
 # hive-1.2.1问题修复
 
+spark-2.x依赖的hive client版本是`1.2.1.spark2`。
+
+以下的修改都在分支：https://github.com/cloudnativecube/hive/commits/bugfix-for-1.2.1.spark2
+
 - https://issues.apache.org/jira/browse/HIVE-11102 ReaderImpl: getColumnIndicesFromNames does not work for some cases
 - https://issues.apache.org/jira/browse/HIVE-11592 ORC metadata section can sometimes exceed protobuf message size limit
 - https://issues.apache.org/jira/browse/HIVE-11928 ORC footer and metadata section can also exceed protobuf message limit
