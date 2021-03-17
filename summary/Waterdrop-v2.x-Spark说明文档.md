@@ -14,7 +14,7 @@
 
 Waterdrop 是一个`非常易用`，`高性能`、支持`实时流式`和`离线批处理`的`海量数据`处理产品，架构于`Apache Spark` 和 `Apache Flink`之上。可对接多种数据源，以插件化形式开发方便扩展。理论上来讲，只要是flink和spark能够支持的数据源，waterdrop都可以支持。
 
-其版本分为1.x和2.x，2,x主要特点是：
+其版本分为1.x和2.x，2.x主要特点是：
 
 - 2.x基于flink和spark运行，两种引擎都支持批、流的实现（spark用spark sql、spark streaming，flink用flink dataset、flink stream）。另外，spark流式计算还预留了structure streaming的接口，可以自行开发实现。2.x的代码用maven构建。
 
@@ -29,6 +29,8 @@ waterdrop架构简单，分为source、transform、sink三个模块，分别称�
 | Kafka         | Hbase         |           |
 | Phoenix       | Mysql         |           |
 | Socket        | Phoenix       |           |
+|               | Hive          |           |
+|               | Hdfs          |           |
 
 用户在使用时，可以实际业务需求，将source、transform、sink灵活组合，例如：
 
@@ -37,37 +39,31 @@ waterdrop架构简单，分为source、transform、sink三个模块，分别称�
 
 
 
-## 3 可行性分析
+## 3 程序启动
 
-如果将waterdrop应用到我们的平台，优势及待改进项列举如下：
-
-- 架构和代码实现非常简单，方便维护和扩展。
-- 基于spark和flink两个优秀的计算引擎执行数据转换任务，性能有保证。
-- waterdrop有一个子项目，用于监控和报警：https://github.com/InterestingLab/guardian 。
-- waterdrop自身实现的tranform逻辑比较简单，需要再开发一些复杂的transform以满足更多的业务场景。
-
-
-
-## 4 程序启动
-
-在**spark集群的客户端**中执行脚本(.../bin/start-waterdrop-spark.sh)，设置config值为**配置文件**名称。
+在**spark集群的客户端**中执行脚本(bin/start-waterdrop-spark.sh)，设置`${CONFIG}`值为**配置文件**名称。
 
 ```shell
-./waterdrop-dist-2.0.4-2.11.12/bin/start-waterdrop-spark.sh \
+$ cd waterdrop-dist-2.0.4-2.11.12
+$ ./bin/start-waterdrop-spark.sh \
   --master yarn \
   --deploy-mode client \
   --config ${CONFIG}
 ```
 
-**注**：客户端找不到SPARK_HOME时，可在start-waterdrop-spark.sh中添加：`SPARK_HOME=/home/servers/spark-2.4.7` 或 其他spark所在路径。
+**注**：
+
+1.`start-waterdrop-spark.sh`内部就是调用spark-submit，提交了waterdrop的程序包。
+
+2.客户端在`start-waterdrop-spark.sh`中找不到`SPARK_HOME`时，可在start-waterdrop-spark.sh中执行`${SPARK_HOME}/bin/spark-submit `前一行添加：`SPARK_HOME=/home/servers/spark-2.4.7` 或 其他spark所在路径。
 
 
 
-## 5 配置文件
+## 4 配置文件
 
-### 5.1 Source插件配置
+### 4.1 Source插件配置
 
-#### 5.1.1 source通用
+#### 4.1.1 source通用
 
 ##### Option
 
@@ -93,7 +89,7 @@ fake {
 
 
 
-#### 5.1.2 Hive
+#### 4.1.2 Hive
 
 ##### Description
 
@@ -106,14 +102,14 @@ fake {
 | name           | type   | required | default value | 备注                                                         |
 | -------------- | ------ | -------- | ------------- | ------------------------------------------------------------ |
 | pre_sql        | string | yes      | -             | 进行预处理的sql, 如果不需要预处理,可以使用select * from hive_db.hive_table |
-| common-options | string | yes      | -             | Source 插件通用参数，详情参照 [Source Plugin](https://interestinglab.github.io/waterdrop-docs/#/zh-cn/v2/spark/configuration/source-plugins/) |
+| common-options | string | yes      | -             | Source 插件通用参数，详情参照 ”4.1.1 source通用“             |
 
 **注**：使用hive source必须做如下配置：
 
 ```
 # Waterdrop 配置文件中的spark section中：
 
-spark {
+env {
   ...
   spark.sql.catalogImplementation = "hive"
   ...
@@ -125,7 +121,7 @@ spark {
 ##### Examples
 
 ```
-spark {
+env {
   ...
   spark.sql.catalogImplementation = "hive"
   ...
@@ -143,7 +139,7 @@ source {
 
 
 
-#### 5.1.3 JDBC
+#### 4.1.3 JDBC
 
 ##### Description
 
@@ -158,10 +154,10 @@ source {
 | driver         | string | yes      | -             | 用来连接远端数据源的JDBC类名                                 |
 | jdbc.*         | string | no       |               | 除了以上必须指定的参数外，用户还可以指定多个非必须参数，覆盖了Spark JDBC提供的所有[参数](https://spark.apache.org/docs/2.4.0/sql-programming-guide.html#jdbc-to-other-databases)。指定参数的方式是在原参数名称上加上前缀"jdbc."，如指定fetchsize的方式是: jdbc.fetchsize = 50000。如果不指定这些非必须参数，它们将使用Spark JDBC给出的默认值。 |
 | password       | string | yes      | -             | 密码                                                         |
-| table          | string | yes      | -             | 表名                                                         |
+| table          | string | yes      | -             | 表名，用于读取单个表的所有字段，相当于select * from table。注意：table与query只需要配置其中之一。 |
 | url            | string | yes      | -             | JDBC连接的URL。                                              |
 | user           | string | yes      | -             | 用户名                                                       |
-| query          | string | yes      | -             | 数据库查询语句，非必须值                                     |
+| query          | string | yes      | -             | 数据库查询语句，用于读取特定字段，要在语句外层加上小括号。注意：table与query只需要配置其中之一。 |
 | common-options | string | yes      | -             | -                                                            |
 
 
@@ -176,15 +172,15 @@ jdbc {
     result_table_name = "access_log"
     user = "username"
     password = "password"
-    #query="(select count(*) from z2_test)"
+    #query = "(select count(*) from z2_test)"
 }
 ```
 
 
 
-### 5.2 Sink插件配置
+### 4.2 Sink插件配置
 
-#### 5.2.1 sink通用
+#### 4.2.1 sink通用
 
 ##### Option
 
@@ -203,14 +199,14 @@ jdbc {
 ##### Examples
 
 ```
-stdout {
+console {
     source_table_name = "view_table_2"
 }
 ```
 
 
 
-#### 5.2.2 Clickhouse
+#### 4.2.2 Clickhouse
 
 ##### Description
 
@@ -260,17 +256,17 @@ clickhouse插件在waterdrop2.0.4的基础上进行了修改，增加了以下�
         fields = ["i_item_sk","i_color"]
         table = "item"
         cluster = "ck_cluster"
-        order_keys=["i_item_sk"]
+        order_keys = ["i_item_sk"]
         bulk_size = 50000
-        save_mode="overwrite"
-        nullable_fields=["i_color"]
-        low_cardinality_fields=["i_color"]
-    }
+        save_mode = "overwrite"
+        nullable_fields = ["i_color"]
+        low_cardinality_fields = ["i_color"]
+ }
 ```
 
 
 
-#### 5.2.3 Hdfs
+#### 4.2.3 Hdfs
 
 ##### Description
 
@@ -288,7 +284,7 @@ clickhouse插件在waterdrop2.0.4的基础上进行了修改，增加了以下�
 | path_time_format | string | no       | yyyyMMddHHmmss | 当path参数中的格式为`xxxx-${now}`时，`path_time_format`可以指定路径的时间格式，默认值为 `yyyy.MM.dd`。 |
 | save_mode        | string | no       | error          | 存储模式，当前支持overwrite，append，ignore以及error。每个模式具体含义见[save-modes](http://spark.apache.org/docs/2.2.0/sql-programming-guide.html#save-modes) |
 | serializer       | string | no       | json           | 序列化方法，当前支持csv、json、parquet、orc和text            |
-| common-options   | string | no       | -              | Sink 插件通用参数，详情参照 [Sink Plugin](https://interestinglab.github.io/waterdrop-docs/#/zh-cn/v2/spark/configuration/sink-plugins/) |
+| common-options   | string | no       | -              | Sink 插件通用参数，详情参照 ”4.2.1 sink通用“                 |
 
 常用的时间格式列举如下：
 
@@ -316,7 +312,7 @@ hdfs {
 
 
 
-#### 5.2.4 Hive
+#### 4.2.4 Hive
 
 ##### Description
 
@@ -341,21 +337,21 @@ hdfs {
 | format              | -             | no       | String | 指定文件存储格式。1.不配置就不执行format()； 2.配置非合法值时，报错提示配置合法值； 3.save_mode配置成"append"并且表存在时：format必须与原表一致 4.overwrite_partition被配置后，format必须与原表一致 |
 | save_mode           | error         | no       | String | 数据写入方式 。1.检查配置的值是否合法； 2.partition_by被配置后： 表存在时： （1）error，报错提示配置合法的值； （2）overwrite，会覆盖原表 表不存在时： （1）error和append，报错提示配置"overwrite"； （2）overwrite，会自动建表； 3.overwrite_partition被配置后，save_mode必须为"overwrite" |
 | partition_by        | -             | no       | String | 分区字段。1.save_mode="overwrite"且创建新表时：指定分区；     2.save_mode="append"时：partition_by必须原表一致 |
-| overwrite_partition | -             | no       | String | 覆盖分区，也是操作表还是分区的标识（优先级最高）             |
+| overwrite_partition | -             | no       | String | 覆盖分区，也就是操作表还是分区的标识（优先级最高）           |
 
->  **注**：**overwrite_partition**分为动态覆盖、静态覆盖、动静混合分区覆盖，取决于配置参数；
->
-> 配置此参数，程序即认定为覆盖分区操作，即只操作分区，不再操作整个表。
->
-> **1.动态**：(year,month) 根据插入的数据去覆盖分区，分区不存在的数据会自动新建分区，插入数据。 
->
-> **2.静态：**(year=2017,month=11) 将所有的数据覆盖到此分区上。
->
-> **注意：不能包含不属于此分区的数据，否则会忽略数据中的分区字段，将不属于此分区的数据也写入此分区** **3.混合：**(year=2017,month)
->
-> 在静态指定分区下，动态覆盖。
->
-> **注意：不能包含不属于此静态指定分区的数据，否则会忽略数据中的分区字段，将不属于此静态分区的数据也写入分区**
+**注**：**overwrite_partition**分为动态覆盖、静态覆盖、动静混合分区覆盖，取决于配置参数；
+
+​        配置此参数，程序即认定为覆盖分区操作，即只操作分区，不再操作整个表。
+
+​        **1.动态**：(year,month) 根据插入的数据去覆盖分区，分区不存在的数据会自动新建分区，插入数据。 
+
+​        **2.静态：**(year=2017,month=11) 将所有的数据覆盖到此分区上。
+
+​        **注意：不能包含不属于此分区的数据，否则会忽略数据中的分区字段，将不属于此分区的数据也写入此分区** 
+
+​        **3.混合：**(year=2017,month) 在静态指定分区下，动态覆盖。
+
+​        **注意：不能包含不属于此静态指定分区的数据，否则会忽略数据中的分区字段，将不属于此静态分区的数据也写入分区**
 
 
 
@@ -363,13 +359,70 @@ hdfs {
 
 ```
 hive {
-    database="dev"
-    table_name="hive_table_source"
-    save_mode="overwrite"   #'overwrite'、'append'、'error'
-    format="parquet"        #'parquet'、'orc'
-    partition_by="year,month"		
-    overwrite_partition="year,month" #动态："year,month"；
-                                     #静态："year=2020,month=01"；
-                                     #动静混合："year=2020,month"，静态属性必须在前边，且按照分区顺序排列
-    }
+    database = "dev"
+    table_name = "hive_table_source"
+    save_mode = "overwrite"   #'overwrite'、'append'、'error'
+    format = "parquet"        #'parquet'、'orc'
+    partition_by = "year,month"		
+    overwrite_partition = "year,month" #动态："year,month"；
+                                     #静态："year = 2020,month = 01"；
+                                     #动静混合："year = 2020,month"，静态属性必须在前边，且按照分区顺序排列
+}
 ```
+
+
+
+## 5 hive-ck配置文件实例
+
+```shell
+env {
+  #spark.streaming.batchDuration = 5
+  spark.app.name = "Waterdrop-hive2ck"
+  spark.executor.instances = 4
+  spark.executor.cores = 2
+  spark.executor.memory = "4g"
+  spark.sql.catalogImplementation = "hive"
+}
+
+source {
+  hive {
+     #pre_sql = "select * from mxz_test.ship_mode_12 limit 100"
+     pre_sql = "select * from tpcds_bin_partitioned_orc_5.catalog_sales"
+     #pre_sql = "select * from tpcds_bin_partitioned_orc_5.customer"
+     result_table_name = "hive_dataset"
+  }
+}
+transform {
+       # sql{
+       # sql = "select bigint(sm_ship_mode_sk),sm_ship_mode_id,sm_type,sm_code,sm_carrier,sm_contract from hive_dataset"
+       # result_table_name = "table1"
+      #}
+ #    Convert{
+ #        source_fields = ["sm_ship_mode_id","sm_code"]
+ #        new_types = ["long","string"]
+ #    }
+}
+
+sink{
+    ClickHouse {
+        host = "10.0.0.11:8123,10.0.0.12:8123,10.0.0.13:8123,10.0.0.14:8123"
+        username = "datacube"
+        password = "2020cube"
+        database = "tpcds_bin_partitioned_orc_5"
+        table = "catalog_sales_0301"
+        #cluster = "ck_cluster"
+        #fields = ["c_customer_sk","c_customer_id"]
+        #order_keys = ["cs_ship_date_sk"]
+        bulk_size = 100000
+        #partition_expr = ["sm_type"]
+        #create_clause_local = "CREATE TABLE ship_mode_0219_1 ( %fields ) ENGINE = ReplicatedMergeTree ORDER BY (sm_ship_mode_id) PARTITION BY (sm_type); "
+        #source_table_name = hive_dataset
+        save_mode = "append"
+        #nullable_fields = [sm_type]
+        #low_cardinality_fields = []
+    }
+
+}
+
+```
+
