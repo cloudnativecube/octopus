@@ -33,5 +33,5 @@ start-hbase.sh
 ##### 测试phoenix基本功能
 
 ```
-sqlline.py localhost /home/servers/phoenix-5.0.0/examples/stock_symbol.sql
+sqlline.py localhost /home/servers/phoenix-5.0.0/examples/STOCK_SYMBOL.sql
 ```
