@@ -197,3 +197,134 @@ show tables from myclickhouse.ssb;
 use myhive.ssb;
 ```
 
+
+# presto-on-spark
+## download
+1. https://repo1.maven.org/maven2/com/facebook/presto/presto-spark-package/0.248/presto-spark-package-0.248.tar.gz
+2. https://repo1.maven.org/maven2/com/facebook/presto/presto-spark-launcher/0.248/presto-spark-launcher-0.248.jar
+
+## config
+### 新建 etc/config.properties
+```
+task.concurrency=4
+task.max-worker-threads=4
+task.writer-count=4
+query.max-memory-per-node=1GB
+query.max-total-memory-per-node=2GB
+```
+### 增加 catalogs 配置
+方法详见配置presto/trino 的config部分
+例如 catalogs/hive.properties
+```
+connector.name=hive-hadoop2
+hive.metastore.uri=thrift://centos01:9083
+hive.config.resources=/home/servers/hadoop-3.1.4/etc/hadoop/hdfs-site.xml,/home/servers/hadoop-3.1.4/etc/hadoop/core-site.xml,/home/servers/hadoop-3.1.4/etc/hadoop/mapred-site.xml
+```
+
+## 运行
+
+### 新建 query.sql
+```
+select l.lo_orderkey
+, sum(l.lo_quantity) as s0
+, sum(l.lo_extendedprice) as s1
+, sum(l.lo_ordtotalprice) as s2
+, sum(l.lo_discount) as s3
+, sum(l.lo_revenue) as s4
+, sum(l.lo_supplycost) as s5
+, sum(l.lo_tax) as s6
+from customer as c join lineorder as l on c.c_custkey=l.lo_custkey group by l.lo_orderkey order by s6, s0, s4, s3, s2, s5, s1 desc limit 1
+```
+### 执行
+执行以下语句，可以在spark ui上检测到task
+```
+POS_HOME=/home/servers/presto-on-spark
+
+spark-submit \
+--master yarn \
+--executor-cores 4 \
+--num-executors 2 \
+--conf spark.task.cpus=4 \
+--class com.facebook.presto.spark.launcher.PrestoSparkLauncher \
+  ${POS_HOME}/presto-spark-launcher-0.248.jar \
+--package ${POS_HOME}/presto-spark-package-0.248.tar.gz \
+--config ${POS_HOME}/etc/config.properties \
+--catalogs ${POS_HOME}/etc/catalogs \
+--catalog hive \
+--schema ssb \
+--file query.sql
+```
+# 适用场景
+利用spark 特性，增强presto的容错性
+1. 大规模数据、运行时间长（一般在小时级别的任务）
+
+## 参考文献
+1. https://prestodb.io/docs/current/installation/spark.html
+2. https://databricks.com/de/session_na20/presto-on-apache-spark-a-tale-of-two-computation-engines
+3. https://prestodb.io/blog/2019/08/05/presto-unlimited-mpp-database-at-scale
+
+# trino-353 溢写实验
+
+基于@晓珍搭建的trino353环境实验.
+
+## 实验环境
+
+centos01 作为master
+centos02 作为worker
+
+## 修改的配置
+etc/config.properties
+```
+coordinator=false
+http-server.http.port=8081
+# query.max-memory=50GB
+# 仅在worker上，模拟内存不足的情况
+query.max-memory-per-node=10MB
+# query.max-total-memory-per-node=2GB
+discovery.uri=http://centos01:8081
+# 开启spill
+spill-enabled=true
+spiller-spill-path=/data/trino/tmp/
+```
+**修改配置后重启服务**
+
+## 运行sql
+sql 语句
+```
+use hive.ssb;
+select l.lo_orderkey
+, sum(l.lo_quantity) as s0
+, sum(l.lo_extendedprice) as s1
+, sum(l.lo_ordtotalprice) as s2
+, sum(l.lo_discount) as s3
+, sum(l.lo_revenue) as s4
+, sum(l.lo_supplycost) as s5
+, sum(l.lo_tax) as s6
+from customer as c join lineorder as l on c.c_custkey=l.lo_custkey group by l.lo_orderkey order by s2, s6, s0, s4, s3 desc limit 100;
+```
+
+1. spill-enabled=false
+会报出一下错误
+```
+Query 20210316_093749_00004_6ctpf failed: Query exceeded per-node user memory limit of 10MB [Allocated: 9.98MB, Delta: 28.59kB, Top Consumers: {HashBuilderOperator=9.98MB, ScanFilterAndProjectOperator=3.73MB, PartitionedOutputOperator=101.94kB}]
+```
+2. spill-enabled=true
+程序正确执行，并在`spiller-spill-path`可以观察到spill文件。
+
+## 适用场景
+对于内存密集型计算引擎，往往需要比较多的内存。 当开启spill时，当内存不足时，可以将一些中间结果进行磁盘溢写，防止OOM。正如文档介绍`The mechanism is similar to OS level page swapping`
+
+[可溢写的情况](https://trino.io/docs/current/admin/spill.html#supported-operations)
+
+ 
+## 参考文献
+1. https://trino.io/docs/current/admin/spill.html
+2. https://trino.io/docs/current/admin/properties-spilling.html
+
+
+# 总结
+1. `presto-on-spark`本质上是一个spark程序，`presto`负责sql解析、优化、stage和task划分， `spark`负责资源调度、task重试等。
+2. presto/trino 面向分析查询，执行时间在秒级, 没有面向query的容错机制
+3. spark(presto-on-spark)，面向流批任务，执行时间在分钟/小时级别
+4. trino的 `spill` 机制， 当内存不足时，可以把一些中间结果溢写到磁盘，减小了`peak memory`防止OOM
+
