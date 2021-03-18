@@ -1,10 +1,18 @@
-## 架构图
+## 系统架构图
 
 ![cube](./cube.png)
 
 
 
-## 查询路由引擎
+## 建模过程与模型应用
+
+![cube-model](./cube-model.png)
+
+## 智能路由
+
+智能路由是指将用户发起查询请求的sql语句，通过查询路由引擎打到后端合适的目标存储引擎上，而用户不需要关注到底是哪个目标存储引擎执行的计算。
+
+实现方式是：查询路由引擎对语句进行模型匹配（把语句发给特征分析引擎，特征分析引擎对该语句作预测，返回与之匹配的目标引擎）。因此智能路由还是依赖智能建模的结果。
 
 ### 候选项目对比
 
@@ -51,27 +59,52 @@
 
 ## 智能建模
 
+建模指的是把原始schema模型转成目标shema模型，譬如将Hive中表的定义和关联关系转成Clickhouse中宽表定义。建模过程不包括数据转换。
+
 ### 需求
+
+#### 1.SQL语句建模
 
 许多⽤户希望能够依据 SQL 查询语句，⾃动地创建好⼀个可⽤的模型，然后进⾏后续的模型优化或调整。
 
-智能建模的输入：用户的历史查询语句。
+- 智能建模的输入：
 
-智能建模的输出：适用于目标引擎的模型（参见模型的要素）。
+  (1)批量导入：从界面批量导入用户的查询语句，一次性生成模型。
+
+  (2)即时采集：系统记录用户输入的查询语句，并构建原始语句集，用于后续生成模型。在这种方式下，当用户输入查询时还没有目标引擎，所以查询请求将通过presto打到hive上（需要验证presto => hive的性能）。
+
+- 智能建模的输出：
+
+  (1)目标引擎
+
+  (2)适用于目标引擎的模型（参见“模型的要素”）。
+
+#### 2.ER图建模
+
+用户手动指定hive表的如下信息：事实表、维度表、关联关系，构建出ER图。
+
+系统根据ER图构建目标引擎的模型。这个模型是一个全量的模型，它包含了表之间存在的所有关联关系；而“SQL语句建模”很可能不是全量的。
+
+先通过“ER图建模”生成全量模型，后续再通过“SQL语句建模”对全量模型作剪枝，去掉用户根本不会用到的关联查询。
 
 ### 设计
 
 模型要素包括：
 
-- 事实表、维度表、宽表
-- 维度、度量
-- 表与表的关联关系
-- 目标引擎：clickhouse, es, hbase
+- 事实表、维度表：分析出hive中哪些表是事实表，哪些表是维度表。
+- 表与表的关联关系：通过分析事实表、维度表之间的join的条件得到。
+- 宽表：事实表和维度表通过join之后可以产生的宽表。
+- 维度列、度量列：通过分析group by和聚合函数得到。
+- 目标引擎：clickhouse, es, hbase。
 
 重要概念：
 
 - 可计算列：将原始表的列进行某种计算，如将“单价”与“数量”相乘，得到“总价”（`total=price*amount`）。可计算列可以作为维度或度量。当用户查询时，引擎把对`price*amount`的查询翻译成对`total`的查询。显式查询是对查total，隐式查询是查price*amount。
 - 索引：针对维度列建立的索引。
+
+### 选择目标引擎
+
+如何根据语句特征，决定使用哪一个目标引擎？
 
 ### ClickHouse模型设计
 
@@ -95,9 +128,10 @@ group by A.dim_columns, B.dim_columns, C.dim_columns
 order by ...
 
 2.生成模型的语句：
-select A.dim_columns, B.dim_columns, C.dim_columns, A.metric_columns,B.metric_columns,C.metric_columns
+insert into WIDE select A.dim_columns, B.dim_columns, C.dim_columns, A.metric_columns,B.metric_columns,C.metric_columns
 from A,B,C
 on A.a = B.b1 and B.b2=c.c
+加视图
 
 3.那么宽表的列由以下列组成：
 [A.dim_columns, B.dim_columns, C.dim_columns, A.metric_columns, B.metric_columns, C.metric_columns]
@@ -113,8 +147,8 @@ Q3 = D join E join F
 Q4 = G join H
 Q5 = H join I
 
-2.生成表的关联关系图：
-(1)图1：
+2.生成表的关联关系图（每个图里最多有两个事实表）：
+(1)图1（假设B、D是事实表，则E不能是事实表）：
 A-B-C
   |
   D-E-F
@@ -126,9 +160,15 @@ G-H-I
 (2)图2：[{G,H,I}的维度列和度量列]
 ```
 
+问题：
+
+- 怎么用最少的图覆盖最多的SQL语句？
+- 不同的join类型对应的处理方式是什么样的？left join, right join等
+- 数据量缺失的问题：首先要确定哪些表是事实表，然后限制每个图里最多有两个事实表。
+
 #### 3.细化场景
 
-(1) 关联的表一样，等值条件一样，但是维度列/指标列**不一样**：生成一张宽表。
+(1) 关联的表**一样**，等值条件**一样**，但是维度列/指标列**不一样**：生成一张宽表。
 
 ```
 Q1 = A join B on A.a=B.b，维度列和指标列是{A.dim_a1, B,dim_b1, A.metric_a1, B.metric_b1}
@@ -137,7 +177,7 @@ Q2 = A join B on A.a=B.b，维度列和指标列是{A.dim_a2, B,dim_b2, A.metric
 [A.dim_a1, B,dim_b1, A.dim_a2, B,dim_b2, A.metric_a1, B.metric_b1, A.metric_a2, B.metric_b2]
 ```
 
-(2) 关联的表一样，等值条件**不一样**：生成多张宽表。
+(2) 关联的表**一样**，等值条件**不一样**：生成多张宽表。
 
 ```
 Q1 = A join B on A.a1=B.b1，维度列和指标列是{A.dim_a1, B,dim_b1, A.metric_a1, B.metric_b1}
@@ -147,7 +187,7 @@ Q2 = A join B on A.a2=B.b2，维度列和指标列是{A.dim_a2, B,dim_b2, A.metr
 [A.dim_a2, B,dim_b2, A.metric_a2, B.metric_b2]
 ```
 
-#### 4.模型优化
+#### 4.新增语句
 
 当新的查询语句无法被已有的模型覆盖时，此时可能有两种选择，一种是优化现有模型，一种是新建模型。例如：
 
@@ -173,13 +213,13 @@ C-E
 如果“C join E”的查询非常频繁，那么第(2)种方式更合适。
 ```
 
+#### ck的能力支持
 
-
-#### ck的宽表示例
+1.ck的宽表示例
 
 - Star Schema Benchmark https://clickhouse.tech/docs/en/getting-started/example-datasets/star-schema/
 
-#### ck的group by
+2.ck的group by
 
 如果在ck中执行的group by的字段，是sort by字段的前缀，那么聚集操作会更高效，以下来自ck文档：
 
@@ -187,7 +227,14 @@ https://clickhouse.tech/docs/en/sql-reference/statements/select/group-by/#implem
 
 > The aggregation can be performed more effectively, if a table is sorted by some key, and GROUP BY expression contains at least prefix of sorting key or injective functions.
 
+3.ck可以添加或删除跳数索引
 
+https://clickhouse.tech/docs/en/sql-reference/statements/alter/index/
+
+4.物化视图添加或删除列
+
+ALTER <materialized view name> MODIFY QUERY <select_query> 
+目前虽然merge了，但是官网没有找到相关介绍，根据参数介绍该原语还不能保证原子性（work in progress）
 
 ### ElasticSearch的模型设计
 
