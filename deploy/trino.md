@@ -1,5 +1,7 @@
 # Trino(原Presto)安装文档
 
+官方文档：https://trino.io/docs/current/index.html
+
 ### 1.环境要求
 
 安装的trino版本为353，其所需的环境如下：
@@ -165,10 +167,11 @@ phoenix.config.resources=/home/servers/hbase-2.2.6/conf/hbase-site.xml
 
 #关闭trino，需每个节点单独执行
 /home/servers/trino-server-353/bin/launcher stop
-
 ```
 
-官方提供命令行的客户端以及jdbc的接口用于查询请求，客户端下载链接：https://repo1.maven.org/maven2/io/trino/trino-cli/353/trino-cli-353-executable.jar
+启动后可访问WebUI查看集群信息：http://centos01:8081，检查页面显示的worker的数量是否与启动的节点数量一致，**注意节点的时间要保持同步**。
+
+官方提供客户端以及jdbc的接口用于查询请求，客户端下载链接：https://repo1.maven.org/maven2/io/trino/trino-cli/353/trino-cli-353-executable.jar
 
 ```sh
 #赋予执行权限
@@ -316,7 +319,7 @@ Query 20210316_093749_00004_6ctpf failed: Query exceeded per-node user memory li
 
 [可溢写的情况](https://trino.io/docs/current/admin/spill.html#supported-operations)
 
- 
+
 ## 参考文献
 1. https://trino.io/docs/current/admin/spill.html
 2. https://trino.io/docs/current/admin/properties-spilling.html
