@@ -1,5 +1,7 @@
 # prometheus部署&监控接入
 ## prometheus部署
+### prometheus访问地址
+10.0.0.11:9090
 ### 下载安装包
 wget https://github.com/prometheus/prometheus/releases/download/v2.25.1/prometheus-2.25.1.linux-amd64.tar.gz
 ### 创建用户和目录并赋权
@@ -64,6 +66,9 @@ reload:
 curl -X POST http://10.0.0.11:9090/-/reload  
 
 ## grafana部署
+### grafana访问地址
+10.0.0.11:9090
+#### 安装部署
 wget https://dl.grafana.com/oss/release/grafana-7.4.5-1.x86_64.rpm  
 yum install -y grafana-7.4.5-1.x86_64.rpm  
 systemctl start grafana-server  
