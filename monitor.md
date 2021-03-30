@@ -68,6 +68,8 @@ wget https://dl.grafana.com/oss/release/grafana-7.4.5-1.x86_64.rpm
 yum install -y grafana-7.4.5-1.x86_64.rpm  
 systemctl start grafana-server  
 systemctl enable grafana-server  
+### grafana添加prometheus数据源
+![image](https://user-images.githubusercontent.com/10804016/112923976-de18c880-9141-11eb-971a-f76c210fb8d2.png)
 
 ## 接入ClickHouse
 ### 暴露CK监控接口
