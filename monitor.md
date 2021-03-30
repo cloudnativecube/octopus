@@ -18,7 +18,7 @@ cp -r prometheuspackage/consoles /etc/prometheus
 cp -r prometheuspackage/console_libraries /etc/prometheus  
 chown -R prometheus:prometheus /etc/prometheus/consoles  
 chown -R prometheus:prometheus /etc/prometheus/console_libraries  
-### 配置
+### 配置prometheus
 vim /etc/prometheus/prometheus.yml
 ```
 global:
@@ -30,3 +30,35 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 ```
+### 配置启动文件
+vim /etc/systemd/system/prometheus.service  
+```
+Unit]
+Description=Prometheus
+Wants=network-online.target
+After=network-online.target
+[Service]
+User=prometheus
+Group=prometheus
+LimitCORE=infinity
+LimitNOFILE=409600
+LimitNPROC=409600
+Type=simple
+ExecStart=/usr/local/bin/prometheus \
+--config.file /etc/prometheus/prometheus.yml \
+--storage.tsdb.path /var/lib/prometheus/ \
+--web.enable-lifecycle \
+--web.console.templates=/etc/prometheus/consoles \
+--web.console.libraries=/etc/prometheus/console_libraries \
+--storage.tsdb.retention.time=4w
+[Install]
+WantedBy=multi-user.target
+```
+### 启动&reload命令
+启动:
+systemctl daemon-reload
+systemctl start prometheus
+reload:
+curl -X POST http://10.0.0.11:9090/-/reload
+
+
