@@ -103,5 +103,41 @@ vim /etc/prometheus/prometheus.yml
 ```
 reload  
 curl -X POST http://10.0.0.11:9090/-/reload  
+
 ### grafana导入CK监控模板
 https://grafana.com/grafana/dashboards/13500  
+
+## 接入spark-3.0
+
+### 暴露spark监控接口
+
+vim /home/servers/spark-3.0.0/conf/metrics.properties
+
+```
+*.sink.prometheusServlet.class=org.apache.spark.metrics.sink.PrometheusServlet
+*.sink.prometheusServlet.path=/metrics/prometheus
+```
+
+### 接入Prometheus
+
+vim /etc/prometheus/prometheus.yml
+
+增加如下配置 
+
+```
+ - job_name: 'spark-executors'  
+   scrape_interval: 15s  
+   metrics_path: '/metrics/executors/prometheus'  
+   static_configs:   
+     - targets: ['10.0.0.11:4040']
+```
+
+reload  
+curl -X POST http://10.0.0.11:9090/-/reload  
+
+验证接入成功：curl http://10.0.0.11:4040/metrics/executors/prometheus
+
+### grafana导入CK监控模板
+
+https://grafana.com/grafana/dashboards/7890（模板基于K8S，很多指标采集不到，需调试metrics）
+
