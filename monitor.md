@@ -67,7 +67,8 @@ curl -X POST http://10.0.0.11:9090/-/reload
 
 ## grafana部署
 ### grafana访问地址
-10.0.0.11:9090
+10.0.0.11:3000  
+账号密码：admin/2020root
 #### 安装部署
 wget https://dl.grafana.com/oss/release/grafana-7.4.5-1.x86_64.rpm  
 yum install -y grafana-7.4.5-1.x86_64.rpm  
