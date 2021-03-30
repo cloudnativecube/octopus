@@ -64,9 +64,36 @@ reload:
 curl -X POST http://10.0.0.11:9090/-/reload  
 
 ## grafana部署
-wget https://dl.grafana.com/oss/release/grafana-7.4.5-1.x86_64.rpm
-yum install -y grafana-7.4.5-1.x86_64.rpm
-systemctl start grafana-server
-systemctl enable grafana-server
+wget https://dl.grafana.com/oss/release/grafana-7.4.5-1.x86_64.rpm  
+yum install -y grafana-7.4.5-1.x86_64.rpm  
+systemctl start grafana-server  
+systemctl enable grafana-server  
 
 ## 接入ClickHouse
+### 暴露CK监控接口
+vim /etc/clickhouse-server/config.d/config.xml  
+```
+    <prometheus>
+        <endpoint>/metrics</endpoint>
+        <port>9363</port>
+
+        <metrics>true</metrics>
+        <events>true</events>
+        <asynchronous_metrics>true</asynchronous_metrics>
+        <status_info>true</status_info>
+    </prometheus>
+```
+重启  
+clickhouse restart  
+### 接入prometheus
+vim /etc/prometheus/prometheus.yml
+```
+  - job_name: 'clickhouse'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['10.0.0.11:9363','10.0.0.12:9363','10.0.0.13:9363','10.0.0.14:9363']
+```
+reload  
+curl -X POST http://10.0.0.11:9090/-/reload  
+### grafana导入CK监控模板
+https://grafana.com/grafana/dashboards/13500  
