@@ -24,7 +24,21 @@
 
 # 参数配置
 
-## 配置
+## env配置
+
+**注意：使用hive sink必须做如下配置：**
+
+```
+# Waterdrop 配置文件中的spark section中：
+
+spark {
+  ...
+  spark.sql.catalogImplementation = "hive"
+  ...
+}
+```
+
+## Sink配置
 
 |        name         | default_value | required |  type  |
 | :-----------------: | :-----------: | :------: | :----: |
