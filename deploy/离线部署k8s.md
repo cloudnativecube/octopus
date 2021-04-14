@@ -125,6 +125,14 @@ kubeadm join 10.0.0.13:6443 --token 6so4km.p13vr6rwpp33cwpk \
     --discovery-token-ca-cert-hash sha256:7ad8fa68caadf926fae196d5a6102849a2b312a74ca8bd8e42c02ac4dbe34daa
 ```
 ### 安装calico
+下载镜像  
+```
+image: calico/typha:v3.10.4
+image: calico/cni:v3.10.4
+image: calico/pod2daemon-flexvol:v3.10.4
+image: calico/node:v3.10.4
+image: calico/kube-controllers:v3.10.4
+```
 保存离线镜像  
 cat save-caclico-images.sh  
 ```
