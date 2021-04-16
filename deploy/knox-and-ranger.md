@@ -543,6 +543,8 @@ YARN REST URL = http://10.0.0.11:8088
 /home/servers/ranger-2.0.0/ranger-2.0.0-hive-plugin
 ```
 
+#### 7.1审计日志输出到solr
+
 配置：
 
 ```
@@ -552,7 +554,7 @@ COMPONENT_INSTALL_DIR_NAME=/home/servers/hive-3.1.2
 CUSTOM_USER=hadoop
 CUSTOM_GROUP=hadoop
 
-// 审计日志
+// 审计日志到solr
 XAAUDIT.SOLR.ENABLE=true
 XAAUDIT.SOLR.URL=NONE
 XAAUDIT.SOLR.USER=NONE
@@ -563,6 +565,7 @@ XAAUDIT.SOLR.IS_ENABLED=false
 XAAUDIT.SOLR.MAX_QUEUE_SIZE=1
 XAAUDIT.SOLR.MAX_FLUSH_INTERVAL_MS=1000
 XAAUDIT.SOLR.SOLR_URL=http://centos01:8983/solr/ranger_audits
+
 ```
 
 创建spool目录：
@@ -610,7 +613,83 @@ jdbc.url = jdbc:hive2://centos01:10000
 // 执行select查询
 ```
 
-然后在ranger-admin上能看到审计日志。
+然后在ranger-admin能看到审计日志
+
+#### 7.2审计日志输出到kafka
+
+在ranger-ranger-2.0\agents-audit\src\main\java\org\apache\ranger\audit\provider\kafka\KafkaAuditProvider.java中增加kafka配置参数并编译
+
+```
+//add properties bootstrap.servers
+kakfaProps.put("bootstrap.servers", brokerList);
+//add properties key.serializer/value.serializer
+kakfaProps.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+kakfaProps.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+```
+
+将编译输出的包ranger-2.0.1-SNAPSHOT-hive-plugin/lib/ranger-hive-plugin-impl/ranger-plugins-audit-2.0.1.jar替换线上环境
+
+配置
+
+```
+POLICY_MGR_URL=http://centos01:6080
+REPOSITORY_NAME=hivedev
+COMPONENT_INSTALL_DIR_NAME=/home/servers/hive-3.1.2
+CUSTOM_USER=hadoop
+CUSTOM_GROUP=hadoop
+
+//审计日志到kafka
+XAAUDIT.SOLR.ENABLE=false //solr和kafka二选一
+
+XAAUDIT.KAFKA.IS_ENABLED=true
+XAAUDIT.KAFKA.ASYNC=true
+XAAUDIT.KAFKA.IS_ASYNC=true
+XAAUDIT.KAFKA.MAX_QUEUE_SIZE=1
+XAAUDIT.KAFKA.MAX_FLUSH_INTERVAL_MS=1000
+XAAUDIT.KAFKA.BROKER_LIST=10.0.0.11:9092
+XAAUDIT.KAFKA.TOPIC_NAME=ranger_audits
+```
+
+创建spool目录：
+
+```
+# mkdir -p /var/log/hive/audit/solr/spool
+# chown -R hadoop:hadoop /var/log/hive
+```
+
+执行：
+
+```
+# ./enable-hive-plugin.sh
+// 省略中间输出
+Ranger Plugin for hive has been enabled. Please restart hive to ensure that changes are effective.
+```
+
+在hive-3.1.2/conf/hiveserver2-site.xml中会增加关于插件的配置参数。
+
+重启hiveserver2：
+
+```
+# pwd
+/home/servers/hive-3.1.2
+# ps -ef | grep hiveserver2 // 先kill掉hiveserver2
+# nohup hive --service hiveserver2 2>&1 > hiveserver2.log &
+```
+
+使用beelin执行hive sql语句：
+
+```
+# bin/beeline -n hadoop -u jdbc:hive2://localhost:10000
+// 执行select查询
+```
+
+在/home/servers/kafka_2.12-2.7.0/bin执行脚本消费topic数据，可以查看到审计日志
+
+```
+./kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic ranger_audits --from-beginning
+```
+
+
 
 ### 8. HBase plugin
 
