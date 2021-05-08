@@ -138,6 +138,16 @@ USER $USERNAME
                     "description": "pretty",
                     "text": "-enable-pretty-printing",
                     "ignoreFailures": true
+                },
+                {
+                    "description": "Have gdb ignore SIGUSR1",
+                    "text": "handle SIGUSR1 nostop noprint",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Have gdb ignore SIGUSR2",
+                    "text": "handle SIGUSR2 nostop noprint",
+                    "ignoreFailures": true
                 }
             ],
             "preLaunchTask": "ninja"
