@@ -5,7 +5,9 @@ Kerberos 是第三方认证机制，其中用户和服务依赖于第三方（Ke
 （2）认证服务器（Authentication Server，简称 AS）：验证Client端的身份（确定你是身份证上的本人），验证通过就会给一张票证授予票证（Ticket Granting Ticket，简称 TGT）给 Client。  
 （3）票据授权服务器（Ticket Granting Server，简称 TGS）：通过 TGT（AS 发送给 Client 的票）获取访问 Server 端的票（Server Ticket，简称 ST）。ST（Service Ticket）也有资料称为 TGS Ticket。  
 ### 访问过程
+![image](https://user-images.githubusercontent.com/10804016/118083863-43730100-b3f2-11eb-9677-b3d927971e27.png)
 ![image](https://user-images.githubusercontent.com/10804016/116025739-c6225f00-a683-11eb-822d-4f011e111539.png)
+
 ### kerberos故事
 网上找的，能更好的帮助kerberos工作过程
 ```
