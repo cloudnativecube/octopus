@@ -88,3 +88,25 @@ clickhouse-client -n --user "user8" --password "32bk1yKgxxx" -q "SELECT user()"
 ```
 Code: 516. DB::Exception: Received from localhost:9000. DB::Exception: user8: Authentication failed: password is incorrect or there is no user with such name.
 ```
+### ldap外部用户认证
+```
+CREATE USER guolei747 IDENTIFIED WITH LDAP_SERVER BY 'openldap1';
+GRANT ALL ON *.* TO guolei747;
+```
+```
+centos01 :) select * from system.users where auth_type='ldap_server';
+
+SELECT *
+FROM system.users
+WHERE auth_type = 'ldap_server'
+
+Query id: d629e580-5969-4b22-acdd-bb78e8024040
+
+┌─name──────┬───────────────────────────────────id─┬─storage─────────┬─auth_type───┬─auth_params────────────┬─host_ip──┬─host_names─┬─host_names_regexp─┬─host_names_like─┬─default_roles_all─┬─default_roles_list─┬─default_roles_except─┐
+│ guolei747 │ 9b4ef72b-9ff9-13c3-49cc-4e95b8808b90 │ local directory │ ldap_server │ {"server":"openldap1"} │ ['::/0'] │ []         │ []                │ []              │                 1 │ []                 │ []                   │
+│ guolei917 │ e249c8f2-0606-4672-5ea5-fa641159e3b1 │ ldap            │ ldap_server │ {"server":"openldap1"} │ ['::/0'] │ []         │ []                │ []              │                 1 │ []                 │ []                   │
+│ user8     │ da408f73-7ce4-d796-a891-258e07486cbe │ ldap            │ ldap_server │ {"server":"openldap1"} │ ['::/0'] │ []         │ []                │ []              │                 1 │ []                 │ []                   │
+└───────────┴──────────────────────────────────────┴─────────────────┴─────────────┴────────────────────────┴──────────┴────────────┴───────────────────┴─────────────────┴───────────────────┴────────────────────┴──────────────────────┘
+
+3 rows in set. Elapsed: 0.003 sec.
+```
