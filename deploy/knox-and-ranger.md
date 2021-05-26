@@ -218,6 +218,8 @@ https://10.0.0.11:8443/gateway/<topology>/<service>
 
 ```
 # mvn -DskipTests=true clean package install assembly:assembly
+// ranger-2.1.0使用：
+# mvn clean install -DskipTests=true
 ```
 
 在target目录中生成压缩包：
@@ -307,9 +309,13 @@ audit_solr_acl_user_list_sasl=solr,infra-solr
 
 #### 3.3 mysql
 
-install.properties中需要配置`SQL_CONNECTOR_JAR=/usr/share/java/mysql-connector-java-5.1.49.jar`
+ranger-admin使用的database名字是ranger，user名字是rangeradmin。在安装完msyql后，不需要创建database和user，因为在后续安装ranger-admin时会自动创建。
 
-将mysql-connector-java包放到/usr/share/java/。下载地址：https://dev.mysql.com/downloads/connector/j/5.1.html。
+将mysql-connector-java包放到/usr/share/java/。下载地址：https://dev.mysql.com/downloads/connector/j/5.1.html。然后在install.properties中需要配置：
+
+```
+SQL_CONNECTOR_JAR=/usr/share/java/mysql-connector-java-5.1.49.jar`
+```
 
 #### 3.4 solr
 
