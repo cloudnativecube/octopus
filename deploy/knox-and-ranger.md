@@ -29,8 +29,6 @@ https://docs.cloudera.com/runtime/7.2.1/howto-security.html
 # bin/gateway.sh start //gateway不能用root启动
 ```
 
-
-
 ## 2. 反向代理
 
 ### 2.1 配置文件
@@ -317,7 +315,24 @@ ranger-admin使用的database名字是ranger，user名字是rangeradmin。在安
 SQL_CONNECTOR_JAR=/usr/share/java/mysql-connector-java-5.1.49.jar`
 ```
 
-#### 3.4 solr
+#### 3.4 审计日志
+
+##### 1.elasticsearch
+
+```
+audit_store=elasticsearch
+audit_elasticsearch_urls=centos01
+audit_elasticsearch_port=19200
+audit_elasticsearch_protocol=
+audit_elasticsearch_user=
+audit_elasticsearch_password=
+audit_elasticsearch_index=ranger-audit
+audit_elasticsearch_bootstrap_enabled=true
+```
+
+
+
+##### 2.solr
 
 参考：
 
@@ -549,7 +564,7 @@ YARN REST URL = http://10.0.0.11:8088
 /home/servers/ranger-2.0.0/ranger-2.0.0-hive-plugin
 ```
 
-#### 7.1审计日志输出到solr
+#### 7.1 基本配置
 
 配置：
 
@@ -560,25 +575,7 @@ COMPONENT_INSTALL_DIR_NAME=/home/servers/hive-3.1.2
 CUSTOM_USER=hadoop
 CUSTOM_GROUP=hadoop
 
-// 审计日志到solr
-XAAUDIT.SOLR.ENABLE=true
-XAAUDIT.SOLR.URL=NONE
-XAAUDIT.SOLR.USER=NONE
-XAAUDIT.SOLR.PASSWORD=NONE
-XAAUDIT.SOLR.ZOOKEEPER=centos01:2181,centos02:2181,centos03:2181/ranger_audits
-XAAUDIT.SOLR.FILE_SPOOL_DIR=/var/log/hive/audit/solr/spool
-XAAUDIT.SOLR.IS_ENABLED=false
-XAAUDIT.SOLR.MAX_QUEUE_SIZE=1
-XAAUDIT.SOLR.MAX_FLUSH_INTERVAL_MS=1000
-XAAUDIT.SOLR.SOLR_URL=http://centos01:8983/solr/ranger_audits
-
-```
-
-创建spool目录：
-
-```
-# mkdir -p /var/log/hive/audit/solr/spool
-# chown -R hadoop:hadoop /var/log/hive
+//审计日志的配置参考后面其中一种：elasticsearch/solr/kafka
 ```
 
 执行：
@@ -589,7 +586,27 @@ XAAUDIT.SOLR.SOLR_URL=http://centos01:8983/solr/ranger_audits
 Ranger Plugin for hive has been enabled. Please restart hive to ensure that changes are effective.
 ```
 
-在hive-3.1.2/conf/hiveserver2-site.xml中会增加关于插件的配置参数。
+这会产生4个文件：
+
+```
+/home/servers/hive-3.1.2/conf/ranger-policymgr-ssl.xml
+/home/servers/hive-3.1.2/conf/ranger-hive-security.xml
+/home/servers/hive-3.1.2/conf/ranger-hive-audit.xml
+/home/servers/hive-3.1.2/conf/hiveserver2-site.xml
+```
+
+其中在hiveserver2-site.xml中会有关于ranger的配置参数：
+
+```
+    <property>
+        <name>hive.security.authorization.enabled</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>hive.security.authorization.manager</name>
+        <value>org.apache.ranger.authorization.hive.authorizer.RangerHiveAuthorizerFactory</value>
+    </property>
+```
 
 重启hiveserver2：
 
@@ -600,7 +617,7 @@ Ranger Plugin for hive has been enabled. Please restart hive to ensure that chan
 # nohup hive --service hiveserver2 2>&1 > hiveserver2.log &
 ```
 
-在ranger-admin上创建Hive Service：
+在ranger-admin上创建Hive Service（**Test Connection不依赖于hive plugin是否安装**）：
 
 ```
 Service Name = hivedev  // 与REPOSITORY_NAME配置一致
@@ -621,7 +638,47 @@ jdbc.url = jdbc:hive2://centos01:10000
 
 然后在ranger-admin能看到审计日志
 
-#### 7.2审计日志输出到kafka
+#### 7.2 审计日志
+
+##### 1. elasticsearch
+
+配置：
+
+```
+XAAUDIT.ELASTICSEARCH.ENABLE=true
+XAAUDIT.ELASTICSEARCH.URL=centos01
+XAAUDIT.ELASTICSEARCH.USER=NONE
+XAAUDIT.ELASTICSEARCH.PASSWORD=NONE
+XAAUDIT.ELASTICSEARCH.INDEX=ranger-audit
+XAAUDIT.ELASTICSEARCH.PORT=19200
+XAAUDIT.ELASTICSEARCH.PROTOCOL=http
+```
+
+##### 2. solr
+
+配置：
+
+```
+XAAUDIT.SOLR.ENABLE=true
+XAAUDIT.SOLR.URL=NONE
+XAAUDIT.SOLR.USER=NONE
+XAAUDIT.SOLR.PASSWORD=NONE
+XAAUDIT.SOLR.ZOOKEEPER=centos01:2181,centos02:2181,centos03:2181/ranger_audits
+XAAUDIT.SOLR.FILE_SPOOL_DIR=/var/log/hive/audit/solr/spool
+XAAUDIT.SOLR.IS_ENABLED=false
+XAAUDIT.SOLR.MAX_QUEUE_SIZE=1
+XAAUDIT.SOLR.MAX_FLUSH_INTERVAL_MS=1000
+XAAUDIT.SOLR.SOLR_URL=http://centos01:8983/solr/ranger_audits
+```
+
+创建spool目录：
+
+```
+# mkdir -p /var/log/hive/audit/solr/spool
+# chown -R hadoop:hadoop /var/log/hive
+```
+
+##### 3. kafka
 
 在ranger-ranger-2.0\agents-audit\src\main\java\org\apache\ranger\audit\provider\kafka\KafkaAuditProvider.java中增加kafka配置参数并编译
 
@@ -635,18 +692,9 @@ kakfaProps.put("value.serializer", "org.apache.kafka.common.serialization.String
 
 将编译输出的包ranger-2.0.1-SNAPSHOT-hive-plugin/lib/ranger-hive-plugin-impl/ranger-plugins-audit-2.0.1.jar替换线上环境
 
-配置
+配置：
 
 ```
-POLICY_MGR_URL=http://centos01:6080
-REPOSITORY_NAME=hivedev
-COMPONENT_INSTALL_DIR_NAME=/home/servers/hive-3.1.2
-CUSTOM_USER=hadoop
-CUSTOM_GROUP=hadoop
-
-//审计日志到kafka
-XAAUDIT.SOLR.ENABLE=false //solr和kafka二选一
-
 XAAUDIT.KAFKA.IS_ENABLED=true
 XAAUDIT.KAFKA.ASYNC=true
 XAAUDIT.KAFKA.IS_ASYNC=true
@@ -654,32 +702,6 @@ XAAUDIT.KAFKA.MAX_QUEUE_SIZE=1
 XAAUDIT.KAFKA.MAX_FLUSH_INTERVAL_MS=1000
 XAAUDIT.KAFKA.BROKER_LIST=10.0.0.11:9092
 XAAUDIT.KAFKA.TOPIC_NAME=ranger_audits
-```
-
-创建spool目录：
-
-```
-# mkdir -p /var/log/hive/audit/solr/spool
-# chown -R hadoop:hadoop /var/log/hive
-```
-
-执行：
-
-```
-# ./enable-hive-plugin.sh
-// 省略中间输出
-Ranger Plugin for hive has been enabled. Please restart hive to ensure that changes are effective.
-```
-
-在hive-3.1.2/conf/hiveserver2-site.xml中会增加关于插件的配置参数。
-
-重启hiveserver2：
-
-```
-# pwd
-/home/servers/hive-3.1.2
-# ps -ef | grep hiveserver2 // 先kill掉hiveserver2
-# nohup hive --service hiveserver2 2>&1 > hiveserver2.log &
 ```
 
 使用beelin执行hive sql语句：
@@ -694,8 +716,6 @@ Ranger Plugin for hive has been enabled. Please restart hive to ensure that chan
 ```
 ./kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic ranger_audits --from-beginning
 ```
-
-
 
 ### 8. HBase plugin
 

@@ -292,6 +292,9 @@ network.host: centos02
 }
 ```
 
+- 获取索引：`http://centos01:9200/{index}?pretty`
+- 查看索引统计信息：`http://centos01:9200/{index}/_stats?pretty`
+
 # Kibana-7.9.2
 
 ### 概述
