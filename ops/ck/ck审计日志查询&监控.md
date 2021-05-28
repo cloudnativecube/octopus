@@ -22,7 +22,16 @@ output.logstash:
   hosts: ["localhost:5044"]
 ```
 ### 启动filebeat
-systemctl start filebeat.service
+```
+# systemctl start filebeat.service
+```
+
+### 查看日志
+
+```
+# journalctl -fu filebeat
+```
+
 ## 部署logstash
 ### 下载安装logstash
 wget https://artifacts.elastic.co/downloads/logstash/logstash-7.8.0.rpm  
