@@ -112,6 +112,27 @@ clickhouse-sqlalchemy==0.1.6
 
 将superset_config.py放到`PYTHONPATH`包含的路径里。flask的配置也可以写在superset_config.py里。
 
+启动superset（假设superset_config.py放到/export/superset/venv）：
+
+```
+#!/bin/sh
+export PYTHONPATH=$PYTHONPATH:/export/superset/venv
+superset run -h 192.168.56.30 -p 8088 --with-threads --reload --debugger
+```
+
+如果让superset使用https，则在superset run命令之后添加参数：
+
+```
+--cert ./cert.pem  --key ./cert.key
+```
+
+产生证书的命令为：
+
+```
+# openssl genrsa > cert.key
+# openssl req -new -x509 -key cert.key > cert.pem
+```
+
 参考：
 
 - superset配置：https://superset.apache.org/docs/installation/configuring-superset
@@ -147,9 +168,65 @@ https://docs.docker.com/compose/install/
 docker-compose version 1.29.1, build c34c88b2
 ```
 
-## 连接CAS
+## 对接Knox SSO
 
-### 安装python-cas
+文档：http://knox.apache.org/books/knox-1-5-0/user-guide.html。
+
+1.将knox server所在的主机名centos0.local配置在conf/gateway-site.xml中：
+
+```
+<name>gateway.dispatch.whitelist</name>
+<value>^https?:\/\/(localhost|127\.0\.0\.1|centos0.local|0:0:0:0:0:0:0:1|::1):[0-9].*$</value>  
+```
+
+2.启动knox server。
+
+3.生成证书文件给superset用
+
+在data/security/keystores中执行：
+
+```
+# keytool -keystore gateway.jks -export-cert -file gateway.cer -alias gateway-identity -rfc
+```
+
+然后把gateway.cer文件拷贝到superset目录下，并在superset_config.py中配置：
+
+```
+KNOX_CERT_FILE = "/export/superset/venv/gateway.cer"
+```
+
+在python环境中安装[Authlib](https://docs.authlib.org/en/stable/jose/index.html)（这里安装的是最新版0.15.3，项目仓库在https://github.com/lepture/authlib）：
+
+```
+# pip install Authlib
+```
+
+superset改动的代码在：cloudnativecube/superset-sso的master分支。
+
+最终部署的文件如下：
+
+```
+(venv) [root@centos0 venv]# pwd
+/export/superset/venv
+(venv) [root@centos0 venv]# ll
+总用量 40
+drwxr-xr-x 2 root root 4096 5月  19 18:14 bin
+-rw-r--r-- 1 root root 1679 6月   2 16:30 cert.key
+-rw-r--r-- 1 root root 1472 6月   2 16:30 cert.pem
+-rw-r--r-- 1 root root 4074 6月   3 14:02 custom_security.py
+-rw-r--r-- 1 root root 1279 6月   2 11:29 gateway.cer
+drwxr-xr-x 3 root root   18 5月  17 17:42 include
+drwxr-xr-x 3 root root   23 5月  17 17:28 lib
+lrwxrwxrwx 1 root root    3 5月  17 17:28 lib64 -> lib
+drwxr-xr-x 2 root root   82 6月   3 14:02 __pycache__
+-rw-r--r-- 1 root root   76 5月  17 17:28 pyvenv.cfg
+-rw-r--r-- 1 root root 1360 6月   2 17:13 superset_config.py
+-rwxr-xr-x 1 root root  226 6月   2 16:34 superset.sh
+```
+
+## 对接CAS（废弃）
+
+### 安装python-cas client
 
 可用版本到这里查看：https://pypi.org/project/python-cas/#history 。
 
@@ -226,7 +303,7 @@ superset run -h 192.168.56.30 -p 8088 --with-threads --reload --debugger
 
 - Flask-AppBuilder文档：https://flask-appbuilder.readthedocs.io/en/latest/intro.html
 
-## 编译cas
+### 编译cas server
 
 cas编译依赖java11。
 
@@ -236,7 +313,7 @@ macos安装java11的下载地址：https://repo.huaweicloud.com/java/jdk/11.0.2+
 # export JAVA_HOME=`/usr/libexec/java_home -v 11` 
 ```
 
-### 1. 使用cas-overlay-template编译
+#### 1. 使用cas-overlay-template编译
 
 ```
 # git clone git@github.com:apereo/cas-overlay-template.git
@@ -253,7 +330,7 @@ macos安装java11的下载地址：https://repo.huaweicloud.com/java/jdk/11.0.2+
 distributionUrl=gradle-7.0-bin.zip
 ```
 
-### 2. 使用源码编译
+#### 2. 使用源码编译
 
 参考：https://apereo.github.io/cas/6.3.x/developer/Build-Process.html
 
@@ -268,7 +345,7 @@ distributionUrl=gradle-6.8.3-bin.zip
 # ./gradlew build install --parallel -x test -x javadoc -x check --build-cache --configure-on-demand
 ```
 
-## 部署cas
+### 部署cas  server
 
 生成密钥库：
 
@@ -321,7 +398,7 @@ cas.logout.redirect-parameter=service
 
 登录的用户名/密码：casuser / Mellon
 
-### 其他密钥库常用操作
+#### 其他密钥库常用操作
 
 ```
 //列出密钥库中的条目
