@@ -158,13 +158,21 @@ http://centos0.local:6080/service/public/v2/api/servicedef/{id}
 
 注意：postman只能访问/service/public接口，所以ckman也通过public接口获取数据。
 
-
-
 #### ranger auditlog
 
+1.ranger侧代码
 
+auditlog接口调用的入口：
 
-参考
+```
+getAccessLogs@AssetREST.java =>
+getAccessLogs@AssetMgr.java =>
+searchXAccessAudits@ElasticSearchAccessAuditsService.java
+```
+
+2.logstash配置
+
+参考：
 
 - logstash最佳实践：https://doc.yonyoucloud.com/doc/logstash-best-practice-cn/index.html
 - 官方文档：https://www.elastic.co/guide/en/logstash/7.x/introduction.html
