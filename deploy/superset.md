@@ -224,6 +224,8 @@ drwxr-xr-x 2 root root   82 6月   3 14:02 __pycache__
 -rwxr-xr-x 1 root root  226 6月   2 16:34 superset.sh
 ```
 
+对于一个superset上不存在的用户，当knox认证通过之后，将在superset里自动创建该用户。然后通过admin给该用户授予角色Alpha和sql_lab，就可以用sql语句查询后端database了。
+
 ## 对接CAS（废弃）
 
 ### 安装python-cas client
