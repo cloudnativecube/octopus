@@ -385,6 +385,18 @@ solr接收日志时，同步到各节点有些延迟，当在ranger-admin上查�
 
 `openssl s_client -connect 10.0.0.11:8443 < /dev/null | openssl x509 -out /tmp/knox.crt`
 
+install.properties
+
+```
+#-------- SSO CONFIG - Start ------------------
+sso_enabled=true
+sso_providerurl=https://10.0.0.11:8443/gateway/knoxsso/api/v1/websso
+sso_publickey=MIIDbDCCAlSgAwIBAgIINV5zz2Bs7uwwDQYJKoZIhvcNAQEFBQAwXzELMAkGA1UEBhMCVVMxDTALBgNVBAgTBFRlc3QxDTALBgNVBAcTBFRlc3QxDzANBgNVBAoTBkhhZG9vcDENMAsGA1UECxMEVGVzdDESMBAGA1UEAxMJbG9jYWxob3N0MB4XDTIxMDYwMTAxNDgxNVoXDTIyMDYwMTAxNDgxNVowXzELMAkGA1UEBhMCVVMxDTALBgNVBAgTBFRlc3QxDTALBgNVBAcTBFRlc3QxDzANBgNVBAoTBkhhZG9vcDENMAsGA1UECxMEVGVzdDESMBAGA1UEAxMJbG9jYWxob3N0MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAjG40mYjSOUnnPBtZQVvVfKVsRzt5SmoMgqbkjWUp2CebZm2ulWhn79fsvthmcSM+JkvIUWH7bGZkuDup48R00GEOUPJGO49HMpr62pC3hZ8NEFXFAHY8YUcP5DWB+UsB5tvQMspaRMuaY64NTRsq7NqPYjtuzxC8XdE4vhr5gaElDqrzlTsYVXXax3Qc5VZuOyv5CVROq5p4z3ZwugHz7OGjrVVQ9gIT3DKcScWRMOQHoOX2LJQJeOTbsrtqRt5Gdo60JN2kWP5utKxB/Dtp+exXOyTa0IjvyazqPQyNt5HURTfL4sKS/sjSwGa/ce+jsP5fLxBajUfKzOI5u0UBlwIDAQABoywwKjAoBgNVHREEITAfgghjZW50b3MwMYIIY2VudG9zMDGCCWxvY2FsaG9zdDANBgkqhkiG9w0BAQUFAAOCAQEABw7GV51W0m07QIrG7sgUNjTUQNI9zjf59REHpW2kORnTvk8bKIncDERg2BjqjpV3oBvxYWQs4Mfd7Lc69TmTCVpUtA3MZQ7VQkZg0u0eE724JjeDRrYnt0O5QEX4T/bfNndh5a42FM+AxCHNhBP+4A9AymVR7l9cOHjxcL8CwBlT4cIwQfRc4De0fDJnyjwwmmImUli3KMii6u5emkriPd8n8UNhlXfg5oTCJHlFAZM1mzdSJ3P/IVCXCYkmPdiqXAqlPE+gbH0dS6vWxGlFocLjQ9AKPfPXgHiqU96q3HbU53G9ODKydM6PjdVyIgXgO60B2t5wTJ668GTcbdSRpg==
+#-------- SSO CONFIG - END ------------------
+```
+
+#### 3.6 ranger-HTTPS配置
+
 在ranger-2.1.0-admin/conf生成证书，最后输入设置的密码需与证书库xasecure一致，否则启动报错
 
 ```
@@ -393,69 +405,17 @@ chown ranger:ranger ranger-admin-keystore.jks
 chmod 400 ranger-admin-keystore.jks
 ```
 
-conf/ranger-admin-site.xml
+install.properties
 
-        <!--需注释
-        <property>
-                <name>ranger.service.http.port</name>
-                <value>6080</value>
-        </property>
-        -->
-        <property>
-                <name>ranger.service.http.enabled</name>
-                <value>false</value>
-        </property>
-        <property>
-                <name>ranger.service.https.attrib.ssl.enabled</name>
-                <value>true</value>
-        </property>
-        <property>
-                <name>ranger.service.https.attrib.keystore.keyalias</name>
-                <value>rangeradmin</value>
-        </property>
-        <property>
-                <name>ranger.service.https.attrib.keystore.pass</name>
-                <value>xasecure</value>
-        </property>
-        <property>
-                <name>ranger.service.https.port</name>
-                <value>6080</value>
-        </property>
-        <property>
-                <name>ranger.sso.enabled</name>
-                <value>true</value>
-        </property>
-        <property>
-                <name>ranger.service.https.attrib.keystore.file</name>
-                <value>/home/servers/ranger-2.1.0/ranger-2.1.0-admin/conf/ranger-admin-keystore.jks</value>
-        </property>
-        <property>
-                <name>ranger.sso.providerurl</name>
-                <value>https://10.0.0.11:8443/gateway/knoxsso/api/v1/websso</value>
-        </property>
-        <property>
-                <name>ranger.sso.browser.useragent</name>
-                <value>Mozilla,chrome</value>
-        </property>
-        <property>
-                <!--knox.crt中begin-end中内容-->
-                <name>ranger.sso.publicKey</name>
-       <value>MIIDbDCCAlSgAwIBAgIINV5zz2Bs7uwwDQYJKoZIhvcNAQEFBQAwXzELMAkGA1UEBhMCVVMxDTALBgNVBAgTBFRlc3QxDTALBgNVBAcTBFRlc3QxDzANBgNVBAoTBkhhZG9vcDENMAsGA1UECxMEVGVzdDESMBAGA1UEAxMJbG9jYWxob3N0MB4XDTIxMDYwMTAxNDgxNVoXDTIyMDYwMTAxNDgxNVowXzELMAkGA1UEBhMCVVMxDTALBgNVBAgTBFRlc3QxDTALBgNVBAcTBFRlc3QxDzANBgNVBAoTBkhhZG9vcDENMAsGA1UECxMEVGVzdDESMBAGA1UEAxMJbG9jYWxob3N0MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAjG40mYjSOUnnPBtZQVvVfKVsRzt5SmoMgqbkjWUp2CebZm2ulWhn79fsvthmcSM+JkvIUWH7bGZkuDup48R00GEOUPJGO49HMpr62pC3hZ8NEFXFAHY8YUcP5DWB+UsB5tvQMspaRMuaY64NTRsq7NqPYjtuzxC8XdE4vhr5gaElDqrzlTsYVXXax3Qc5VZuOyv5CVROq5p4z3ZwugHz7OGjrVVQ9gIT3DKcScWRMOQHoOX2LJQJeOTbsrtqRt5Gdo60JN2kWP5utKxB/Dtp+exXOyTa0IjvyazqPQyNt5HURTfL4sKS/sjSwGa/ce+jsP5fLxBajUfKzOI5u0UBlwIDAQABoywwKjAoBgNVHREEITAfgghjZW50b3MwMYIIY2VudG9zMDGCCWxvY2FsaG9zdDANBgkqhkiG9w0BAQUFAAOCAQEABw7GV51W0m07QIrG7sgUNjTUQNI9zjf59REHpW2kORnTvk8bKIncDERg2BjqjpV3oBvxYWQs4Mfd7Lc69TmTCVpUtA3MZQ7VQkZg0u0eE724JjeDRrYnt0O5QEX4T/bfNndh5a42FM+AxCHNhBP+4A9AymVR7l9cOHjxcL8CwBlT4cIwQfRc4De0fDJnyjwwmmImUli3KMii6u5emkriPd8n8UNhlXfg5oTCJHlFAZM1mzdSJ3P/IVCXCYkmPdiqXAqlPE+gbH0dS6vWxGlFocLjQ9AKPfPXgHiqU96q3HbU53G9ODKydM6PjdVyIgXgO60B2t5wTJ668GTcbdSRpg==</value>
-        </property>
-        <property>
-                <name>ranger.service.https.attrib.clientAuth</name>
-                <value>want</value>
-        </property>
-    
-        <property>
-                <name>ranger.service.https.attrib.client.auth</name>
-                <value>want</value>
-        </property>
-        <property>
-                <name>ranger.https.attrib.keystore.file</name>
-                <value>/home/servers/ranger-2.1.0/ranger-2.1.0-admin/conf/ranger-admin-keystore.jks</value>
-        </property>
-#### 3.6 安装和启动admin服务
+```
+policymgr_external_url=https://localhost:6080
+policymgr_http_enabled=false
+policymgr_https_keystore_file=/home/servers/ranger-2.1.0/ranger-2.1.0-admin/conf/ranger-admin-keystore.jks
+policymgr_https_keystore_keyalias=rangeradmin
+policymgr_https_keystore_password=xasecure
+```
+
+#### 3.7 安装和启动admin服务
 
 用root执行：
 
