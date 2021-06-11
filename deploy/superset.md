@@ -121,7 +121,7 @@ clickhouse-driver==0.2.0
 clickhouse-sqlalchemy==0.1.6
 ```
 
-添加database时指定的jdbc uri（连接的是clickhouse的tcp端口9000）：
+添加database时指定的jdbc uri（走tcp协议端口9000）：
 
 ```
 无密码： clickhouse+native://default@localhost:9000/default
@@ -133,10 +133,11 @@ clickhouse-sqlalchemy==0.1.6
 依赖包：
 
 ```
-sqlalchemy-clickhouse  0.1.5.post0
+infi.clickhouse-orm    2.1.0
+sqlalchemy-clickhouse  0.1.5 //用源码安装：https://github.com/cloudflare/sqlalchemy-clickhouse
 ```
 
-添加database时指定的jdbc uri格式为：
+添加database时指定的jdbc uri格式为（走http协议端口）：
 
 ```
 clickhouse://{cluster}.{user}:{password}@{chproxy_host}:{chproxy_port}/{database}
@@ -146,23 +147,6 @@ clickhouse://{cluster}.{user}:{password}@{chproxy_host}:{chproxy_port}/{database
 
 ```
 clickhouse://ch01.z2:123@10.0.0.13:9090/default
-```
-
-注：sqlalchemy-clickhouse有个bug，导致不会发送{user}和{password}。
-
-修复方式为：文件lib/python3.7/site-packages/sqlalchemy_clickhouse/connector.py的以下代码段：
-
-```
-from six import PY3, string_types
-def _send(self, data, settings=None, stream=False):
-    if PY3 and isinstance(data, string_types):
-        data = data.encode('utf-8')
-    params = self._build_params(settings)
-    r = self.request_session.post(self.db_url, params=params, data=data, stream=stream) //这行代码需要修改
-    if r.status_code != 200:
-        raise Exception(r.text)
-    return r
-Database._send = _send
 ```
 
 ## 配置superset
