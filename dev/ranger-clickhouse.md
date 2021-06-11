@@ -1,3 +1,5 @@
+# Ranger对接ClickHouse
+
 ## 支持的clickhouse权限模型
 
 ### allow privileges
@@ -26,60 +28,21 @@ OPTIMIZE
 ALTER QUOTA IF EXISTS qB ON CLUSTER cluster1 FOR INTERVAL 30 minute MAX execution_time = 0.5, FOR INTERVAL 5 quarter MAX queries = 321, errors = 10 TO default;
 ```
 
-Quota policy定义：
+chproxy使用的quota policy配置：
 
 ```
-"name": "qB"
-"user": "user1"
-ckserver: [
-  {
-    "cluster": "cluster1"
-    "forInterval": [
-      {
-        "interval": "30 minute",
-        "max"：[
-          {"execution_time": 0.5}
-        ]
-      },
-      {
-        "interval": "5 quarter",
-        "max"：[
-          {"queries": 321},
-          {"errors": 10}
-        ]
-      }
-    ]
-  },
-  {}
-]
-
-
-chproxy:
-{ 
-  "id":
-  "version":
-  "quotas": [
-		{
-     "clusters": [
-        {
-          "cluster": "ch01", 
-          "requests_per_minute": 4,
-          "max_concurrent_queries": 4,
-          "max_execution_time": 1m
-        },
-        {}
-      ], 
-      "user": "user01",
-    },
-    {}
-  ]
-}
-      
+max_concurrent_queries=10
+max_execution_time=120
+requests_per_minute=60
 ```
-
-
 
 ## Ranger开发
+
+#### 编译命令
+
+```
+# mvn clean package -DskipTests -Dmaven.test.skip=true
+```
 
 #### 源码文件
 
@@ -150,13 +113,13 @@ log4j.category.org.apache.ranger=debug,xa_log_appender
 重要的接口：
 
 ```
-获取一个service下的所有policy：
+获取一个service的所有policy：
 http://centos0.local:6080/service/public/v2/api/service/{servicename}/policy
 获取一个service的定义：
 http://centos0.local:6080/service/public/v2/api/servicedef/{id}
+获取一个service的所有policy（该接口不会走认证）：
+http://centos0.local:6080/service/plugins/policies/download/{servicename}
 ```
-
-注意：postman只能访问/service/public接口，所以ckman也通过public接口获取数据。
 
 #### ranger auditlog
 
