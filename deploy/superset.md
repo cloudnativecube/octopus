@@ -43,6 +43,24 @@ CentOS Linux release 7.7.1908 (Core)
 Python 3.7.10
 ```
 
+如果在make之后有提示：`The necessary bits to build these optional modules were not found`，请按以下安装对应的依赖：
+
+```
+缺少库名称	  安装命令
+_uuid	      yum install libuuid-devel
+readline	  yum install readline-devel
+_tkinter	  yum install tk-devel
+_ffi	      yum install libffi-devel 
+_curses 	  yum install ncurses-libs
+_sqlite	    yum install sqlite-devel
+_bz2        yum isntall bzip2-devel
+_ssl	      yum install openssl-devel
+_gdbm	      yum install gdbm-devel
+_dbi	      yum install libdbi-devel
+_zlib 	    yum install zlib-devel
+_lzma	      yum install xz-devel python-backports-lzma
+```
+
 ### 安装Python Virtual Environment
 
 ```
@@ -94,6 +112,8 @@ Admin User admin created.
 
 ## 连接clickhouse
 
+1.连接clickhouse server
+
 安装连接ck的依赖包：
 
 ```
@@ -101,11 +121,48 @@ clickhouse-driver==0.2.0
 clickhouse-sqlalchemy==0.1.6
 ```
 
-添加database时指定的jdbc链接地址（使用tcp端口9000）：
+添加database时指定的jdbc uri（连接的是clickhouse的tcp端口9000）：
 
 ```
 无密码： clickhouse+native://default@localhost:9000/default
 有密码： clickhouse+native://demo:demo@localhost:9000/default
+```
+
+2.连接chproxy
+
+依赖包：
+
+```
+sqlalchemy-clickhouse  0.1.5.post0
+```
+
+添加database时指定的jdbc uri格式为：
+
+```
+clickhouse://{cluster}.{user}:{password}@{chproxy_host}:{chproxy_port}/{database}
+```
+
+比如，连接的是chproxy的http端口9090（chproxy连接的是clickhouse的http端口）：
+
+```
+clickhouse://ch01.z2:123@10.0.0.13:9090/default
+```
+
+注：sqlalchemy-clickhouse有个bug，导致不会发送{user}和{password}。
+
+修复方式为：文件lib/python3.7/site-packages/sqlalchemy_clickhouse/connector.py的以下代码段：
+
+```
+from six import PY3, string_types
+def _send(self, data, settings=None, stream=False):
+    if PY3 and isinstance(data, string_types):
+        data = data.encode('utf-8')
+    params = self._build_params(settings)
+    r = self.request_session.post(self.db_url, params=params, data=data, stream=stream) //这行代码需要修改
+    if r.status_code != 200:
+        raise Exception(r.text)
+    return r
+Database._send = _send
 ```
 
 ## 配置superset

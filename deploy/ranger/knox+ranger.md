@@ -6,19 +6,19 @@ https://docs.cloudera.com/runtime/7.2.1/howto-security.html
 
 # 一、Knox
 
-用户文档：http://knox.apache.org/books/knox-1-4-0/user-guide.html
+用户文档：http://knox.apache.org/books/knox-1-5-0/user-guide.html
 
 下载地址：https://cwiki.apache.org/confluence/display/KNOX/Apache+Knox+Releases#ApacheKnoxReleases-Downloads
 
-选择[knox-1.1.0.zip](https://www.apache.org/dyn/closer.cgi/knox/1.1.0/knox-1.1.0.zip)
+选择[knox-1.5.0.zip](https://www.apache.org/dyn/closer.cgi/knox/1.5.0/knox-1.5.0.zip)
 
 ## 1. Knox启动
 
 ```
 # pwd
 /home/servers
-# unzip knox-1.1.0.zip
-# cd knox-1.1.0 //GATEWAY_HOME=/home/servers/knox-1.1.0
+# unzip knox-1.5.0.zip
+# cd knox-1.5.0 //GATEWAY_HOME=/home/servers/knox-1.5.0
 # sudo su - hadoop
 
 // 生成master secret，以密文形式持久化到{GATEWAY_HOME}/data/security/master文件中
@@ -41,13 +41,22 @@ https://docs.cloudera.com/runtime/7.2.1/howto-security.html
 
 ### 2.2 认证配置
 
-与用户名密码配置有关的参数：
+设置knox server地址的白名单（conf/gateway-site.xml）：
 
 ```
-            <param>
-                <name>main.ldapRealm.userDnTemplate</name>
-                <value>uid={0},ou=people,dc=hadoop,dc=apache,dc=org</value>
-            </param>
+    <property>
+        <name>gateway.dispatch.whitelist</name>
+        <value>^https?:\/\/(localhost|10.0.0.10|centos00|127\.0\.0\.1|0:0:0:0:0:0:0:1|::1):[0-9].*$</value>
+    </property>
+```
+
+knox允许http sso（conf/topologies/knoxsso.xml）：
+
+```
+        <param>
+            <name>knoxsso.cookie.secure.only</name>
+            <value>false</value>
+        </param>
 ```
 
 以及文件conf/users.ldif，修改这个文件之后要重启ldap服务。
@@ -212,42 +221,15 @@ https://10.0.0.11:8443/gateway/<topology>/<service>
 
 ### 2. 安装包
 
-下载：http://ranger.apache.org/download.html 选择[apache-ranger-2.0.0.tar.gz](https://www.apache.org/dyn/closer.lua/ranger/2.0.0/apache-ranger-2.0.0.tar.gz)
+下载：http://ranger.apache.org/download.html 选择[apache-ranger-2.1.0.tar.gz](https://www.apache.org/dyn/closer.lua/ranger/2.1.0/apache-ranger-2.1.0.tar.gz)
 
 编译：
 
 ```
-# mvn -DskipTests=true clean package install assembly:assembly
-// ranger-2.1.0使用：
-# mvn clean install -DskipTests=true
+# mvn clean package -DskipTests -Dmaven.test.skip=true
 ```
 
-在target目录中生成压缩包：
-
-```
-ranger-2.0.0-admin.tar.gz
-ranger-2.0.0-atlas-plugin.tar.gz
-ranger-2.0.0-elasticsearch-plugin.tar.gz
-ranger-2.0.0-hbase-plugin.tar.gz
-ranger-2.0.0-hdfs-plugin.tar.gz
-ranger-2.0.0-hive-plugin.tar.gz
-ranger-2.0.0-kafka-plugin.tar.gz
-ranger-2.0.0-kms.tar.gz
-ranger-2.0.0-knox-plugin.tar.gz
-ranger-2.0.0-kylin-plugin.tar.gz
-ranger-2.0.0-migration-util.tar.gz
-ranger-2.0.0-ozone-plugin.tar.gz
-ranger-2.0.0-presto-plugin.tar.gz
-ranger-2.0.0-ranger-tools.tar.gz
-ranger-2.0.0-solr-plugin.tar.gz
-ranger-2.0.0-solr_audit_conf.tar.gz
-ranger-2.0.0-sqoop-plugin.tar.gz
-ranger-2.0.0-src.tar.gz
-ranger-2.0.0-storm-plugin.tar.gz
-ranger-2.0.0-tagsync.tar.gz
-ranger-2.0.0-usersync.tar.gz
-ranger-2.0.0-yarn-plugin.tar.gz
-```
+然后会在target目录中生成各组件的压缩包。
 
 每个组件在安装时，都要先配置各自的install.properties。
 
@@ -258,19 +240,19 @@ ranger-2.0.0-yarn-plugin.tar.gz
 依赖组件：
 
 - mysql：用于存储acl策略
-- solr：用于存储审计日志
+- elasticsearch/solr：用于存储审计日志
 - zookeeper：solr集群依赖zookeeper
 
 部署目录：
 
 ```
-/home/servers/ranger-2.0.0/ranger-2.0.0-admin
+/home/servers/ranger-2.1.0/ranger-2.1.0-admin
 ```
 
 日志目录：
 
 ```
-/home/servers/ranger-2.0.0/ranger-2.0.0-admin/ews/logs/
+/home/servers/ranger-2.1.0/ranger-2.1.0-admin/ews/logs/
 ```
 
 #### 3.2 install.properties配置
@@ -293,29 +275,34 @@ rangerAdmin_password=2020root
 rangerTagsync_password=2020root
 rangerUsersync_password=2020root
 keyadmin_password=2020root
-// 审计日志
-audit_store=solr
-audit_solr_urls=http://centos01:8983/solr/ranger_audits  // plugin的配置要用到该参数
-audit_solr_user=
-audit_solr_password=
-audit_solr_zookeepers=centos01:2181,centos02:2181,centos03:2181/ranger_audits
-audit_solr_collection_name=ranger_audits
-audit_solr_config_name=ranger_audits
-audit_solr_no_shards=3
-audit_solr_no_replica=2
-audit_solr_max_shards_per_node=1
-audit_solr_acl_user_list_sasl=solr,infra-solr
 ```
 
 #### 3.3 mysql
 
-ranger-admin使用的database名字是ranger，user名字是rangeradmin。在安装完msyql后，不需要创建database和user，因为在后续安装ranger-admin时会自动创建。
-
-将mysql-connector-java包放到/usr/share/java/。下载地址：https://dev.mysql.com/downloads/connector/j/5.1.html。然后在install.properties中需要配置：
+1.给mysql设置root的密码，命令：
 
 ```
-SQL_CONNECTOR_JAR=/usr/share/java/mysql-connector-java-5.1.49.jar`
+mysql> ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'root';
 ```
+
+2.ranger-admin使用的database名字是ranger，user名字是rangeradmin。在安装完msyql后，不需要创建database和user，因为在后续执行ranger-admin的setup.sh脚本时会自动创建。
+
+3.将mysql-connector-java包放到/usr/share/java/。下载地址：https://dev.mysql.com/downloads/connector/j/5.1.html。然后在install.properties中需要配置：
+
+```
+SQL_CONNECTOR_JAR=/usr/share/java/mysql-connector-java-5.1.49.jar
+```
+
+4.如果执行setup.sh时出现以下错误，请在mysqld.cnf中[mysqld]区段添加参数`log_bin_trust_function_creators = 1`，并重启mysql。
+
+```
+java.sql.SQLException: This function has none of DETERMINISTIC, NO SQL, or READS SQL DATA in its declaration and binary logging is enabled (you *might* want to use the less safe log_bin_trust_function_creators variable)
+SQLException : SQL state: HY000 java.sql.SQLException: This function has none of DETERMINISTIC, NO SQL, or READS SQL DATA in its declaration and binary logging is enabled (you *might* want to use the less safe log_bin_trust_function_creators variable) ErrorCode: 1418
+```
+
+5.在ubuntu上安装mysql，默认的myql版本比较高，与ranger兼容性不太好。请参考以下文档安装mysql-5.5：
+
+https://williamlfang.github.io/post/2020-06-16-mysql-%E6%8C%87%E5%AE%9A%E5%AE%89%E8%A3%85%E7%89%88%E6%9C%AC5.5/
 
 #### 3.4 审计日志
 
@@ -332,11 +319,23 @@ audit_elasticsearch_index=ranger-audit
 audit_elasticsearch_bootstrap_enabled=true
 ```
 
-
-
 ##### 2.solr
 
-参考：
+```
+audit_store=solr
+audit_solr_urls=http://centos01:8983/solr/ranger_audits
+audit_solr_user=
+audit_solr_password=
+audit_solr_zookeepers=centos01:2181,centos02:2181,centos03:2181/ranger_audits
+audit_solr_collection_name=ranger_audits
+audit_solr_config_name=ranger_audits
+audit_solr_no_shards=3
+audit_solr_no_replica=2
+audit_solr_max_shards_per_node=1
+audit_solr_acl_user_list_sasl=solr,infra-solr
+```
+
+solr参考文档：
 
 - https://lucene.apache.org/solr/guide/8_6/
 
@@ -363,7 +362,7 @@ ZK_HOST="centos01:2181,centos02:2181,centos03:2181/ranger_audits"
 Started Solr server on port 8983 (pid=12474). Happy searching
 
 // 创建collection，只需要执行一次
-# bin/solr create_collection -force -c ranger_audits -d /home/servers/ranger-2.0.0/ranger-2.0.0-admin/contrib/solr_for_audit_setup/conf/ -shards 3 -replicationFactor 2  // -c是集合名，-d是ranger_admin的solr conf目录
+# bin/solr create_collection -force -c ranger_audits -d /home/servers/ranger-2.1.0/ranger-2.1.0-admin/contrib/solr_for_audit_setup/conf/ -shards 3 -replicationFactor 2  // -c是集合名，-d是ranger_admin的solr conf目录
 ```
 
 solr默认监听8983端口。web UI：http://10.0.0.11:8983/solr/#/
@@ -382,8 +381,6 @@ solr接收日志时，同步到各节点有些延迟，当在ranger-admin上查�
 在${knox.home}/data/security/keystores生成证书
 
 `keytool -keystore gateway.jks -export-cert -file gateway.cer -alias gateway-identity -rfc`
-
-`openssl s_client -connect 10.0.0.11:8443 < /dev/null | openssl x509 -out /tmp/knox.crt`
 
 install.properties
 
@@ -439,7 +436,7 @@ admin web UI：http://10.0.0.11:6080
 目录：
 
 ```
-/home/servers/ranger-2.0.0/ranger-2.0.0-usersync
+/home/servers/ranger-2.1.0/ranger-2.1.0-usersync
 ```
 
 配置：
@@ -462,7 +459,7 @@ rangerUsersync_password=2020root // 要与admin的配置一致
 目录：
 
 ```
-/home/servers/ranger-2.0.0/ranger-2.0.0-hdfs-plugin
+/home/servers/ranger-2.1.0/ranger-2.1.0-hdfs-plugin
 ```
 
 配置：
@@ -535,7 +532,7 @@ Namenode URL = hdfs://10.0.0.11:8020
 目录：
 
 ```
-/home/servers/ranger-2.0.0/ranger-2.0.0-yarn-plugin
+/home/servers/ranger-2.1.0/ranger-2.1.0-yarn-plugin
 ```
 
 配置：
@@ -601,7 +598,7 @@ YARN REST URL = http://10.0.0.11:8088
 目录：
 
 ```
-/home/servers/ranger-2.0.0/ranger-2.0.0-hive-plugin
+/home/servers/ranger-2.1.0/ranger-2.1.0-hive-plugin
 ```
 
 #### 7.1 基本配置
@@ -764,7 +761,7 @@ XAAUDIT.KAFKA.TOPIC_NAME=ranger_audits
 目录：
 
 ```
-/home/servers/ranger-2.0.0/ranger-2.0.0-hbase-plugin
+/home/servers/ranger-2.1.0/ranger-2.1.0-hbase-plugin
 ```
 
 配置：
@@ -800,7 +797,7 @@ Ranger Plugin for hbase has been enabled. Please restart hbase to ensure that ch
 拷贝jar包：
 
 ```
-# cp /home/servers/ranger-2.0.0/ranger-2.0.0-admin/ews/webapp/WEB-INF/lib/jersey-bundle-1.19.3.jar /home/servers/hbase-2.2.6/lib/
+# cp /home/servers/ranger-2.1.0/ranger-2.1.0-admin/ews/webapp/WEB-INF/lib/jersey-bundle-1.19.3.jar /home/servers/hbase-2.2.6/lib/
 ```
 
 创建spool目录：
@@ -846,7 +843,7 @@ zookeeper.znode.parent = /hbase
 目录：
 
 ```
-/home/servers/ranger-2.0.0/ranger-2.0.0-elasticsearch-plugin
+/home/servers/ranger-2.1.0/ranger-2.1.0-elasticsearch-plugin
 ```
 
 配置：
@@ -881,9 +878,9 @@ XAAUDIT.SOLR.SOLR_URL=http://centos01:8983/solr/ranger_audits
 从hdfs plugin目录把jar包拷过来，同时拷贝到两个目录（不知道为什么缺少jar包）：
 
 ```
-# cp /home/servers/ranger-2.0.0/ranger-2.0.0-hdfs-plugin/install/lib/{woodstox-core-5.0.3.jar,stax2-api-3.1.4.jar,commons-configuration2-2.1.1.jar,htrace-core4-4.1.0-incubating.jar} ./install/lib/
-# cp /home/servers/ranger-2.0.0/ranger-2.0.0-hdfs-plugin/install/lib/{woodstox-core-5.0.3.jar,stax2-api-3.1.4.jar,commons-configuration2-2.1.1.jar,htrace-core4-4.1.0-incubating.jar} ./lib/ranger-elasticsearch-plugin/
-# cp /home/servers/ranger-2.0.0/ranger-2.0.0-admin/ews/lib/zookeeper-3.4.14.jar ./lib/ranger-elasticsearch-plugin/ranger-elasticsearch-plugin-impl/
+# cp /home/servers/ranger-2.1.0/ranger-2.1.0-hdfs-plugin/install/lib/{woodstox-core-5.0.3.jar,stax2-api-3.1.4.jar,commons-configuration2-2.1.1.jar,htrace-core4-4.1.0-incubating.jar} ./install/lib/
+# cp /home/servers/ranger-2.1.0/ranger-2.1.0-hdfs-plugin/install/lib/{woodstox-core-5.0.3.jar,stax2-api-3.1.4.jar,commons-configuration2-2.1.1.jar,htrace-core4-4.1.0-incubating.jar} ./lib/ranger-elasticsearch-plugin/
+# cp /home/servers/ranger-2.1.0/ranger-2.1.0-admin/ews/lib/zookeeper-3.4.14.jar ./lib/ranger-elasticsearch-plugin/ranger-elasticsearch-plugin-impl/
 ```
 
 安装插件：
@@ -963,7 +960,7 @@ grant {
 目录：
 
 ```
-/home/servers/ranger-2.0.0/ranger-2.0.0-knox-plugin
+/home/servers/ranger-2.1.0/ranger-2.1.0-knox-plugin
 ```
 
 配置：
@@ -1029,8 +1026,8 @@ Ranger Plugin for knox has been enabled. Please restart knox to ensure that chan
 
 ```
 # pwd
-/home/servers/ranger-2.0.0/ranger-2.0.0-admin
-# cp /home/servers/knox-1.1.0/data/security/keystores/knox.crt /home/servers/ranger-2.0.0/ranger-2.0.0-admin
+/home/servers/ranger-2.1.0/ranger-2.1.0-admin
+# cp /home/servers/knox-1.1.0/data/security/keystores/knox.crt /home/servers/ranger-2.1.0/ranger-2.1.0-admin
 # cp $JAVA_HOME/jre/lib/security/cacerts cacertswithknox
 # keytool -import -trustcacerts -file knox.crt -alias knox -keystore cacertswithknox
 输入密钥库口令: changeit
@@ -1052,13 +1049,13 @@ Ranger Plugin for knox has been enabled. Please restart knox to ensure that chan
 修改ews/ranger-admin-services.sh：
 
 ```
--Djavax.net.ssl.trustStore=/home/servers/ranger-2.0.0/ranger-2.0.0-admin/cacertswithknox
+-Djavax.net.ssl.trustStore=/home/servers/ranger-2.1.0/ranger-2.1.0-admin/cacertswithknox
 ```
 
 注意，改install.properties以下这个配置不管用！因为java默认使用系统的证书`/etc/pki/java/cacerts`。
 
 ```
-javax_net_ssl_trustStore=/home/servers/ranger-2.0.0/ranger-2.0.0-admin/cacertswithknox
+javax_net_ssl_trustStore=/home/servers/ranger-2.1.0/ranger-2.1.0-admin/cacertswithknox
 javax_net_ssl_trustStorePassword=changeit
 ```
 
