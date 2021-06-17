@@ -165,20 +165,20 @@ CREATE TABLE system.audit_log
 ENGINE = Kafka()
 SETTINGS
     kafka_broker_list = 'localhost:9092',
-    kafka_topic_list = 'outputkafka',
-    kafka_group_name = 'group1',
+    kafka_topic_list = 'clickhouse-audit',
+    kafka_group_name = 'clickhouse-audit',
     kafka_format = 'JSONEachRow';
 ```
 
 创建物化视图：
 
 ```
-CREATE MATERIALIZED VIEW system.audit_log_mv TO system.audit_log AS select *,hostname() as agent_host from system.query_log;
+CREATE MATERIALIZED VIEW system.audit_log_mv TO system.audit_log AS select *, hostname() as agent_host from system.query_log;
 ```
 
 然后消费kafka topic即可看到日志：
 
 ```
-# bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic outputkafka
+# bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic clickhouse-audit
 ```
 
