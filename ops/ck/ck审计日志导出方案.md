@@ -159,7 +159,8 @@ CREATE TABLE system.audit_log
     `used_formats` Array(String),
     `used_functions` Array(String),
     `used_storages` Array(String),
-    `used_table_functions` Array(String)
+    `used_table_functions` Array(String),
+    `agent_host` String
 )
 ENGINE = Kafka()
 SETTINGS
@@ -172,7 +173,7 @@ SETTINGS
 创建物化视图：
 
 ```
-CREATE MATERIALIZED VIEW system.audit_log_mv TO system.audit_log AS select * from system.query_log;
+CREATE MATERIALIZED VIEW system.audit_log_mv TO system.audit_log AS select *,hostname() as agent_host from system.query_log;
 ```
 
 然后消费kafka topic即可看到日志：
