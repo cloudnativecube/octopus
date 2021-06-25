@@ -43,7 +43,7 @@ CentOS Linux release 7.7.1908 (Core)
 Python 3.7.10
 ```
 
-如果在make之后有提示：`The necessary bits to build these optional modules were not found`，请按以下安装对应的依赖：
+如果在make之后有提示：`The necessary bits to build these optional modules were not found`，请按以下列表安装对应的依赖：
 
 ```
 缺少库名称	  安装命令
@@ -95,14 +95,14 @@ Recognized Database Authentications.
 Admin User admin created.
 //初始化并启动
 # superset init
-# superset run -h 0.0.0.0 -p 8088 --with-threads --reload --debugger
+# superset run -h 0.0.0.0 -p 8089 --with-threads --reload --debugger
 ```
 
 注意：
 
 - 有的依赖从默认安装源找不到，需要修改安装源，用-i参数指定：`pip install -i https://pypi.tuna.tsinghua.edu.cn/simple  <xxx>`。
 
-- 如果安装过程中下载太慢，容易出现网络中断。解决办法是下载`.whl`，然后执行`pip install <xxx>.whl`。
+- 如果安装过程中下载太慢，容易出现网络中断。解决办法是下载`.whl`或`.tar.gz`，然后执行`pip install <xxx>.whl`或`pip install <xxx>.tar.gz`。
 
   搜索依赖包的地址：https://pypi.org/search/?q=selenium，可以在“Release history”里查看该包的历史版本。
 
@@ -110,46 +110,9 @@ Admin User admin created.
 
 - 一次安装多个包可能会有冲突，所以最好还是逐个安装。
 
-## 连接clickhouse
-
-1.连接clickhouse server
-
-安装连接ck的依赖包：
-
-```
-clickhouse-driver==0.2.0
-clickhouse-sqlalchemy==0.1.6
-```
-
-添加database时指定的jdbc uri（走tcp协议端口9000）：
-
-```
-无密码： clickhouse+native://default@localhost:9000/default
-有密码： clickhouse+native://demo:demo@localhost:9000/default
-```
-
-2.连接chproxy
-
-依赖包：
-
-```
-infi.clickhouse-orm    2.1.0
-sqlalchemy-clickhouse  0.1.5 //用源码安装：https://github.com/cloudflare/sqlalchemy-clickhouse
-```
-
-添加database时指定的jdbc uri格式为（走http协议端口）：
-
-```
-clickhouse://{cluster}.{user}:{password}@{chproxy_host}:{chproxy_port}/{database}
-```
-
-比如，连接的是chproxy的http端口9090（chproxy连接的是clickhouse的http端口）：
-
-```
-clickhouse://ch01.z2:123@10.0.0.13:9090/default
-```
-
 ## 配置superset
+
+### 启动配置
 
 将superset_config.py放到`PYTHONPATH`包含的路径里。flask的配置也可以写在superset_config.py里。
 
@@ -158,8 +121,10 @@ clickhouse://ch01.z2:123@10.0.0.13:9090/default
 ```
 #!/bin/sh
 export PYTHONPATH=$PYTHONPATH:/export/superset/venv
-superset run -h 192.168.56.30 -p 8088 --with-threads --reload --debugger
+superset run -h 0.0.0.0 -p 8089 --with-threads --reload --debugger
 ```
+
+### https配置
 
 如果让superset使用https，则在superset run命令之后添加参数：
 
@@ -178,6 +143,96 @@ superset run -h 192.168.56.30 -p 8088 --with-threads --reload --debugger
 
 - superset配置：https://superset.apache.org/docs/installation/configuring-superset
 - flask配置：https://flask-appbuilder.readthedocs.org/en/latest/config.html
+
+## 连接clickhouse
+
+1.连接clickhouse server
+
+安装连接ck的依赖包：
+
+```
+clickhouse-driver==0.2.0
+clickhouse-sqlalchemy==0.1.6
+```
+
+添加database时指定的jdbc uri（走tcp协议端口9000）：
+
+```
+无密码： clickhouse+native://{user}@{ck_host}:9000/{database}
+有密码： clickhouse+native://{user}:{password}@{ck_host}:9000/{database}
+```
+
+2.连接chproxy
+
+依赖包：
+
+```
+infi.clickhouse-orm==2.1.0
+sqlalchemy-clickhouse==0.1.5 //用源码安装：https://github.com/cloudflare/sqlalchemy-clickhouse
+```
+
+添加database时指定的jdbc uri格式为（走http协议端口）：
+
+```
+clickhouse://{cluster}.{user}:{password}@{chproxy_host}:{chproxy_port}/{database}
+```
+
+比如，连接的是chproxy的http端口9090（chproxy连接的是clickhouse的http端口）：
+
+```
+clickhouse://ch01.z2:123@10.0.0.13:9090/default
+```
+
+## 连接hive
+
+安装依赖：
+
+```
+sasl==0.3.1
+thrift-sasl==0.4.3
+thrift==0.13.0
+future==0.18.2
+PyHive==0.6.4
+```
+
+当前centos上安装的gcc版本是4.8.5，由于版本过低，当查询hive时报以下错误：
+
+```
+ImportError: /lib64/libstdc++.so.6: version `CXXABI_1.3.9' not found (required by /export/superset/venv/lib/python3.7/site-packages/sasl/saslwrapper.cpython-37m-x86_64-linux-gnu.so)
+```
+
+解决方法是升级libstdc++动态库：
+
+```
+//拷贝libstdc++.so.6.0.28到本机/usr/lib64/目录下
+# ls -l /usr/lib64/libstdc++.so.6*
+/usr/lib64/libstdc++.so.6 -> libstdc++.so.6.0.19
+/usr/lib64/libstdc++.so.6.0.19
+/usr/lib64/libstdc++.so.6.0.28
+# rm -f /usr/lib64/libstdc++.so.6
+# ln -s /usr/lib64/libstdc++.so.6.0.28 /usr/lib64/libstdc++.so.6
+```
+
+用python脚本验证与HiveServer2是否能够连接成功：
+
+```
+# python
+>>> from sqlalchemy import create_engine
+>>> engine = create_engine('hive://hadoop@10.0.0.11:10000')
+>>> result = engine.execute("select * from xyz5")
+>>> result.first()
+```
+
+在superset界面上配置database地址：
+
+```
+hive://{user}:{password}@{hiverserver2_host}:{hiverserver2_port}/{database}
+```
+
+参考：
+
+- superset连接hive：https://superset.apache.org/docs/databases/hive
+- PyHive：https://pypi.org/project/PyHive/
 
 ##  docker安装（未完成）
 
