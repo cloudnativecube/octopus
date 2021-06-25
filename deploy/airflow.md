@@ -78,7 +78,7 @@ export LD_LIBRARY_PATH=/usr/local/lib
 airflow scheduler -D --stderr ./scheduler.err.log --stdout ./scheduler.out.log
 ```
 
-打开url：http://centos00:8081，用户名/密码：admin/admin。
+打开url：http://centos00:8081 ，用户名/密码：admin/admin。
 
 ## 运行spark任务
 
@@ -118,6 +118,16 @@ $ cp lib/python3.7/site-packages/airflow/providers/apache/spark/example_dags/exa
 
 ```
 $ airflow tasks test example_spark_operator submit_job 20210623
+```
+
+## airflow常用配置
+
+配置文件：/home/hadoop/airflow/airflow.cfg。
+
+不加载example operator：
+
+```
+load_examples = False
 ```
 
 ## airflow常用命令
