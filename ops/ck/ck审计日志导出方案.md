@@ -71,7 +71,7 @@ CREATE TABLE system.audit_log
 ENGINE = File(JSONEachRow)
 ```
 
-产生文件的路径为`/{clickhouse_data_path}/data/data/system/audit_log/data.JSONEachRow ` 。如果CK的配置不同，那么路径可能也不相同，但相对路径一致。`{clickhouse_data_path}`配置在/etc/clickhouse-server/config.d/config.xml中，查找`<path>`来获取clickhouse根路径，默认是`/var/lib/clickhouse`，然后再加上`data/system/audit_log/data.JSONEachRow`。
+产生文件的路径为`/{clickhouse_data_path}/data/system/audit_log/data.JSONEachRow ` 。如果CK的配置不同，那么路径可能也不相同，但相对路径一致。`{clickhouse_data_path}`配置在/etc/clickhouse-server/config.d/config.xml中，查找`<path>`来获取clickhouse根路径，默认是`/var/lib/clickhouse`，然后再加上`data/system/audit_log/data.JSONEachRow`。
 
 创建物化视图：
 
