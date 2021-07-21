@@ -67,7 +67,7 @@ curl -X PUT host:port/ontime?pretty -d "@create_es_index_ontime.json"
 1. 由于这里只测试lucence与tantivy，所以修改Makefile里的`ENGINES`变量，只保留这两个；
 1. 准备lucence编译环境：经过踩坑，推荐用JDK8和gradle 5.6.4，JDK11有些兼容性问题，具体步不再赘述；
 1. 准备tantivy编译环境：安装rust：https://www.rust-lang.org/tools/install
-1. 下载数据集:
+1. 下载corpus数据集(可跳过，位于centos04:/home/wgm/dev/search-benchmark-game/corpus_huge.json.tar.xz):
     ```bash
     #从dropbox下载数据集，需梯子，文件2G，解压后7.7G
     make corpus
