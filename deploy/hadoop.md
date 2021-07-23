@@ -170,7 +170,7 @@ mapred-site.xml
         <name>mapreduce.reduce.env</name>
         <value>HADOOP_MAPRED_HOME=${HADOOP_MAPRED_HOME}</value>
     </property>
-</configuration
+</configuration>
 ```
 
 yarn-site.xml
