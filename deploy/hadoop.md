@@ -29,7 +29,7 @@ export PATH=$JAVA_HOME/bin:$PATH
 
 ```
 centos01> sudo adduser hadoop
-centos01> passwd 2020root
+centos01> passwd hadoop
 centos01> sudo usermod -a -G hadoop hadoop 
 centos01> sudo vim /etc/sudoers
 修改文件如下：
