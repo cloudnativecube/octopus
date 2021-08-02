@@ -1,3 +1,32 @@
+# clickhouse+hbase
+
+数据集：https://data.world/promptcloud/fashion-products-on-amazon-com
+
+
+
+### rocksandra
+
+```
+git clone git@github.com:Instagram/cassandra.git
+cd cassandra
+git checkout rocks_3.0
+```
+
+build.properties.default
+
+```
+artifact.remoteRepository.central:     https://maven.aliyun.com/repository/public
+artifact.remoteRepository.apache:      http://repo.maven.apache.org/maven2
+```
+
+```
+ant generate-idea-files
+```
+
+在idea中打开cassandra目录
+
+
+
 # clickhouse+lucene
 
 
