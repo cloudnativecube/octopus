@@ -1,0 +1,349 @@
+{
+  "settings": {
+    "index": {
+      "number_of_shards": 8,
+      "number_of_replicas": 1,
+      "max_result_window": 1000000,
+      "max_inner_result_window": 10000,
+      "requests.cache.enable": false,
+      "queries.cache.enabled": false,
+      "warmer.enabled": false,
+      "sort.field": [
+        "Carrier",
+        "FlightDate"
+      ]
+    }
+  },
+  "mappings": {
+    "properties": {
+      "Year": {
+        "type": "short"
+      },
+      "Quarter": {
+        "type": "byte"
+      },
+      "Month": {
+        "type": "byte"
+      },
+      "DayofMonth": {
+        "type": "byte"
+      },
+      "DayOfWeek": {
+        "type": "byte"
+      },
+      "FlightDate": {
+        "type": "date",
+        "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+      },
+      "UniqueCarrier": {
+        "type": "keyword"
+      },
+      "AirlineID": {
+        "type": "integer"
+      },
+      "Carrier": {
+        "type": "keyword"
+      },
+      "TailNum": {
+        "type": "keyword"
+      },
+      "FlightNum": {
+        "type": "keyword"
+      },
+      "OriginAirportID": {
+        "type": "integer"
+      },
+      "OriginAirportSeqID": {
+        "type": "integer"
+      },
+      "OriginCityMarketID": {
+        "type": "integer"
+      },
+      "Origin": {
+        "type": "keyword"
+      },
+      "OriginCityName": {
+        "type": "keyword"
+      },
+      "OriginState": {
+        "type": "keyword"
+      },
+      "OriginStateFips": {
+        "type": "keyword"
+      },
+      "OriginStateName": {
+        "type": "keyword"
+      },
+      "OriginWac": {
+        "type": "integer"
+      },
+      "DestAirportID": {
+        "type": "integer"
+      },
+      "DestAirportSeqID": {
+        "type": "integer"
+      },
+      "DestCityMarketID": {
+        "type": "integer"
+      },
+      "Dest": {
+        "type": "keyword"
+      },
+      "DestCityName": {
+        "type": "keyword"
+      },
+      "DestState": {
+        "type": "keyword"
+      },
+      "DestStateFips": {
+        "type": "keyword"
+      },
+      "DestStateName": {
+        "type": "keyword"
+      },
+      "DestWac": {
+        "type": "integer"
+      },
+      "CRSDepTime": {
+        "type": "integer"
+      },
+      "DepTime": {
+        "type": "integer"
+      },
+      "DepDelay": {
+        "type": "integer"
+      },
+      "DepDelayMinutes": {
+        "type": "integer"
+      },
+      "DepDel15": {
+        "type": "integer"
+      },
+      "DepartureDelayGroups": {
+        "type": "keyword"
+      },
+      "DepTimeBlk": {
+        "type": "keyword"
+      },
+      "TaxiOut": {
+        "type": "integer"
+      },
+      "WheelsOff": {
+        "type": "integer"
+      },
+      "WheelsOn": {
+        "type": "integer"
+      },
+      "TaxiIn": {
+        "type": "integer"
+      },
+      "CRSArrTime": {
+        "type": "integer"
+      },
+      "ArrTime": {
+        "type": "integer"
+      },
+      "ArrDelay": {
+        "type": "integer"
+      },
+      "ArrDelayMinutes": {
+        "type": "integer"
+      },
+      "ArrDel15": {
+        "type": "integer"
+      },
+      "ArrivalDelayGroups": {
+        "type": "integer"
+      },
+      "ArrTimeBlk": {
+        "type": "keyword"
+      },
+      "Cancelled": {
+        "type": "byte"
+      },
+      "CancellationCode": {
+        "type": "keyword"
+      },
+      "Diverted": {
+        "type": "byte"
+      },
+      "CRSElapsedTime": {
+        "type": "integer"
+      },
+      "ActualElapsedTime": {
+        "type": "integer"
+      },
+      "AirTime": {
+        "type": "integer"
+      },
+      "Flights": {
+        "type": "integer"
+      },
+      "Distance": {
+        "type": "integer"
+      },
+      "DistanceGroup": {
+        "type": "byte"
+      },
+      "CarrierDelay": {
+        "type": "integer"
+      },
+      "WeatherDelay": {
+        "type": "integer"
+      },
+      "NASDelay": {
+        "type": "integer"
+      },
+      "SecurityDelay": {
+        "type": "integer"
+      },
+      "LateAircraftDelay": {
+        "type": "integer"
+      },
+      "FirstDepTime": {
+        "type": "keyword"
+      },
+      "TotalAddGTime": {
+        "type": "keyword"
+      },
+      "LongestAddGTime": {
+        "type": "keyword"
+      },
+      "DivAirportLandings": {
+        "type": "keyword"
+      },
+      "DivReachedDest": {
+        "type": "keyword"
+      },
+      "DivActualElapsedTime": {
+        "type": "keyword"
+      },
+      "DivArrDelay": {
+        "type": "keyword"
+      },
+      "DivDistance": {
+        "type": "keyword"
+      },
+      "Div1Airport": {
+        "type": "keyword"
+      },
+      "Div1AirportID": {
+        "type": "integer"
+      },
+      "Div1AirportSeqID": {
+        "type": "integer"
+      },
+      "Div1WheelsOn": {
+        "type": "keyword"
+      },
+      "Div1TotalGTime": {
+        "type": "keyword"
+      },
+      "Div1LongestGTime": {
+        "type": "keyword"
+      },
+      "Div1WheelsOff": {
+        "type": "keyword"
+      },
+      "Div1TailNum": {
+        "type": "keyword"
+      },
+      "Div2Airport": {
+        "type": "keyword"
+      },
+      "Div2AirportID": {
+        "type": "integer"
+      },
+      "Div2AirportSeqID": {
+        "type": "integer"
+      },
+      "Div2WheelsOn": {
+        "type": "keyword"
+      },
+      "Div2TotalGTime": {
+        "type": "keyword"
+      },
+      "Div2LongestGTime": {
+        "type": "keyword"
+      },
+      "Div2WheelsOff": {
+        "type": "keyword"
+      },
+      "Div2TailNum": {
+        "type": "keyword"
+      },
+      "Div3Airport": {
+        "type": "keyword"
+      },
+      "Div3AirportID": {
+        "type": "integer"
+      },
+      "Div3AirportSeqID": {
+        "type": "integer"
+      },
+      "Div3WheelsOn": {
+        "type": "keyword"
+      },
+      "Div3TotalGTime": {
+        "type": "keyword"
+      },
+      "Div3LongestGTime": {
+        "type": "keyword"
+      },
+      "Div3WheelsOff": {
+        "type": "keyword"
+      },
+      "Div3TailNum": {
+        "type": "keyword"
+      },
+      "Div4Airport": {
+        "type": "keyword"
+      },
+      "Div4AirportID": {
+        "type": "integer"
+      },
+      "Div4AirportSeqID": {
+        "type": "integer"
+      },
+      "Div4WheelsOn": {
+        "type": "keyword"
+      },
+      "Div4TotalGTime": {
+        "type": "keyword"
+      },
+      "Div4LongestGTime": {
+        "type": "keyword"
+      },
+      "Div4WheelsOff": {
+        "type": "keyword"
+      },
+      "Div4TailNum": {
+        "type": "keyword"
+      },
+      "Div5Airport": {
+        "type": "keyword"
+      },
+      "Div5AirportID": {
+        "type": "integer"
+      },
+      "Div5AirportSeqID": {
+        "type": "integer"
+      },
+      "Div5WheelsOn": {
+        "type": "keyword"
+      },
+      "Div5TotalGTime": {
+        "type": "keyword"
+      },
+      "Div5LongestGTime": {
+        "type": "keyword"
+      },
+      "Div5WheelsOff": {
+        "type": "keyword"
+      },
+      "Div5TailNum": {
+        "type": "keyword"
+      }
+    }
+  }
+}
